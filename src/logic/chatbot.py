@@ -1,5 +1,12 @@
 """
-AI Chatbot using FREE APIs (Cohere, Groq, Hugging Face) with rule-based fallback.
+AI Chatbot Integration with Multiple AI Providers
+
+This module provides conversational AI capabilities using multiple free API options:
+- Groq API (primary - fast LLM inference)
+- Hugging Face (secondary - if Groq unavailable)
+- Rule-based fallback (if all APIs unavailable)
+
+Helps users discover local Richmond businesses through natural conversation.
 FBLA 2026 Hidden Gems
 """
 import os
@@ -8,96 +15,143 @@ import urllib.request
 import urllib.error
 from src.database import queries
 
-# Get API keys from config
+# ============================================
+# API CONFIGURATION
+# ============================================
+
 def get_api_keys():
-    """Get API keys from config or environment."""
-    try:
-        import config
-        groq_key = getattr(config, "GROQ_API_KEY", None) or os.environ.get("GROQ_API_KEY")
-        hf_key = getattr(config, "HUGGINGFACE_API_KEY", None) or os.environ.get("HUGGINGFACE_API_KEY")
-        cohere_key = getattr(config, "COHERE_API_KEY", None) or os.environ.get("COHERE_API_KEY")
-    except ImportError:
-        groq_key = os.environ.get("GROQ_API_KEY")
-        hf_key = os.environ.get("HUGGINGFACE_API_KEY")
-        cohere_key = os.environ.get("COHERE_API_KEY")
+    """
+    Retrieve API keys from environment variables or config file.
     
-    return groq_key, hf_key, cohere_key
+    Attempts to load from config module first, then falls back to environment variables.
+    This allows flexible configuration for development and production.
+    
+    Returns:
+        tuple: (groq_key, huggingface_key, cohere_key)
+    """
+    try:
+        # Try to load from config module (development)
+        import config
+        groq_api_key = getattr(config, "GROQ_API_KEY", None) or os.environ.get("GROQ_API_KEY")
+        huggingface_api_key = getattr(config, "HUGGINGFACE_API_KEY", None) or os.environ.get("HUGGINGFACE_API_KEY")
+        cohere_api_key = getattr(config, "COHERE_API_KEY", None) or os.environ.get("COHERE_API_KEY")
+    except ImportError:
+        # Fallback to environment variables only
+        groq_api_key = os.environ.get("GROQ_API_KEY")
+        huggingface_api_key = os.environ.get("HUGGINGFACE_API_KEY")
+        cohere_api_key = os.environ.get("COHERE_API_KEY")
+    
+    return groq_api_key, huggingface_api_key, cohere_api_key
 
 
 def get_business_context():
-    """Get formatted business data for Claude's context."""
-    businesses = queries.get_all_businesses()
-    categories = queries.get_categories()
+    """
+    Build system context for AI chatbot containing business knowledge.
     
-    # Format business data concisely
-    business_list = []
-    for b in businesses[:50]:  # Limit to 50 to avoid token limits
-        business_list.append({
-            "name": b.get("name"),
-            "category": b.get("category"),
-            "rating": b.get("average_rating"),
-            "reviews": b.get("total_reviews"),
-            "address": b.get("address", "")[:50]  # Truncate long addresses
+    Creates a formatted string with:
+    - Available business categories
+    - Top 50 businesses with key details (name, category, rating, reviews)
+    - Role description and response guidelines
+    - Search capabilities and formatting instructions
+    
+    This context is passed to the AI model to help it provide relevant recommendations.
+    
+    Returns:
+        str: System context prompt for AI model
+    """
+    # Fetch all businesses from database
+    all_businesses = queries.get_all_businesses()
+    available_categories = queries.get_categories()
+    
+    # Format business data concisely (limit to 50 to avoid token overflow)
+    formatted_businesses = []
+    for business in all_businesses[:50]:
+        formatted_businesses.append({
+            "name": business.get("name"),
+            "category": business.get("category"),
+            "rating": business.get("average_rating"),
+            "review_count": business.get("total_reviews"),
+            "address": business.get("address", "")[:50]  # Truncate long addresses
         })
     
-    context = f"""You are an AI assistant for Hidden Gems, a local business directory in Richmond, Virginia.
+    # Build comprehensive system prompt
+    system_context = f"""You are an AI assistant for Hidden Gems, a local business directory in Richmond, Virginia.
 
-AVAILABLE CATEGORIES: {', '.join(categories)}
+AVAILABLE BUSINESS CATEGORIES: {', '.join(available_categories)}
 
-BUSINESS DATA (Top 50):
-{business_list}
+TOP BUSINESSES IN DATABASE:
+{formatted_businesses}
 
-YOUR ROLE:
+YOUR ROLE & RESPONSIBILITIES:
 - Help users discover and learn about local Richmond businesses
-- Answer questions about businesses, categories, ratings, and deals
-- Make personalized recommendations based on user preferences
-- Be friendly, conversational, and concise
-- Use emojis sparingly (1-2 per response)
-- Always end with a question or call-to-action
-- If you can't find specific information, suggest alternatives
+- Answer questions about business details, categories, ratings, and special deals
+- Provide personalized business recommendations based on user preferences and needs
+- Maintain friendly, conversational, and concise tone
+- Use emojis sparingly (1-2 per response) for emphasis
+- Always end responses with a question or call-to-action to keep conversation flowing
+- If unable to find specific information, suggest nearby alternatives
 
-RESPONSE FORMAT:
-- Keep responses under 150 words
-- Show maximum 3-5 businesses per response
-- Use bullet points for lists
-- Include ratings as stars (★)
-- Be enthusiastic about local businesses
+RESPONSE FORMATTING GUIDELINES:
+- Keep responses under 150 words for readability
+- Display maximum 3-5 businesses per response to avoid overwhelming user
+- Use bullet points for lists of businesses or features
+- Show star ratings as ★ symbols (★★★★☆ = 4/5 stars)
+- Be enthusiastic and supportive of local Richmond businesses
 
-SEARCH CAPABILITIES:
-When users search, filter by:
-- Category (Food, Retail, Services, Entertainment, Health and Wellness)
-- Rating (show highest rated first)
-- Reviews (mention review counts)
-- Deals (if they ask about discounts)
+SEARCH & RECOMMENDATION CAPABILITIES:
+- Filter businesses by: Category, Rating (show highest first), Review count, Special deals
+- When user searches, prioritize:
+  1. Exact category matches
+  2. Highest ratings
+  3. Most recent reviews
+- Mention business ratings and review counts to build credibility
 
-Remember: You're helping people support local Richmond businesses!"""
+Remember: You're helping Richmond residents support local small businesses!"""
     
-    return context
+    return system_context
 
 
-def detect_intent(message):
-    """Detect user intent from message."""
-    message_lower = message.lower()
+def detect_intent(user_message):
+    """
+    Determine the primary intent of the user's message.
     
-    # Search intent
-    if any(word in message_lower for word in ["find", "search", "looking for", "show me", "where", "need"]):
+    This helps tailor responses and search parameters for better recommendations.
+    
+    Args:
+        user_message (str): The user's input message
+    
+    Returns:
+        str: One of 'search', 'recommendation', 'deals', 'comparison', 'help', or 'general'
+    """
+    message_normalized = user_message.lower()
+    
+    # Detect search intent (user looking for specific business or category)
+    search_keywords = ["find", "search", "looking for", "show me", "where can i", "need"]
+    if any(keyword in message_normalized for keyword in search_keywords):
         return "search"
     
-    # Recommendation intent
-    if any(word in message_lower for word in ["recommend", "suggest", "best", "top", "popular", "favorite"]):
+    # Detect recommendation intent (user wants suggestions)
+    recommendation_keywords = ["recommend", "suggest", "best", "top", "popular", "favorite", "what should i"]
+    if any(keyword in message_normalized for keyword in recommendation_keywords):
         return "recommendation"
     
-    # Deal intent
-    if any(word in message_lower for word in ["deal", "discount", "coupon", "promo", "special", "offer"]):
+    # Detect deals intent (user looking for discounts/offers)
+    deals_keywords = ["deal", "discount", "coupon", "promo", "promotion", "special", "offer", "sale"]
+    if any(keyword in message_normalized for keyword in deals_keywords):
         return "deals"
     
-    # Comparison intent
-    if any(word in message_lower for word in ["compare", "vs", "versus", "difference", "which is better"]):
+    # Detect comparison intent (user comparing businesses)
+    comparison_keywords = ["compare", "vs", "versus", "difference", "which is better", "better than"]
+    if any(keyword in message_normalized for keyword in comparison_keywords):
         return "comparison"
     
-    # Help intent
-    if any(word in message_lower for word in ["help", "how", "what is", "guide", "tutorial"]):
+    # Detect help/info intent (user asking for guidance)
+    help_keywords = ["help", "how", "what is", "guide", "tutorial", "how do i", "how can i"]
+    if any(keyword in message_normalized for keyword in help_keywords):
         return "help"
+    
+    # Default to general conversation
+    return "general"
     
     # Greeting
     if any(word in message_lower for word in ["hi", "hello", "hey", "good morning", "good afternoon"]):

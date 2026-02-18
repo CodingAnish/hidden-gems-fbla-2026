@@ -1,30 +1,47 @@
 """
-Database layer - SQLite connection and schema.
+Database Layer - SQLite Connection and Schema Management
+
+Handles database connection pooling, table creation, and schema migrations.
+All state is persisted in a local SQLite database for development.
+
 Hidden Gems | FBLA 2026
 """
 import os
 import sqlite3
 from pathlib import Path
 
-# Database file path (next to project root, so it persists)
-DB_DIR = Path(__file__).resolve().parent.parent.parent
-DB_PATH = DB_DIR / "hidden_gems.db"
+# Database configuration
+DATABASE_DIRECTORY = Path(__file__).resolve().parent.parent.parent  # Project root
+DATABASE_PATH = DATABASE_DIRECTORY / "hidden_gems.db"
 
 
 def get_connection():
-    """Return a connection to the local SQLite database."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # access columns by name
-    return conn
+    """
+    Get a connection to the SQLite database.
+    
+    Configures row factory to allow accessing columns by name (like dictionaries).
+    
+    Returns:
+        sqlite3.Connection: Database connection with row access by column name
+    """
+    connection = sqlite3.connect(DATABASE_PATH)
+    # Allow accessing columns by name instead of index (Row objects act like dicts)
+    connection.row_factory = sqlite3.Row
+    return connection
 
 
 def init_db():
-    """Create all tables if they do not exist."""
-    conn = get_connection()
-    cur = conn.cursor()
+    """
+    Initialize database tables if they don't exist.
+    
+    Creates all required tables and performs schema migrations for backward compatibility.
+    This function is idempotent - safe to call multiple times.
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
 
-    # Users table - email login + email verification
-    cur.execute("""
+    # Create users table with email, password, verification, and profile info
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
@@ -33,21 +50,38 @@ def init_db():
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """)
-    # Add email_verified to existing DBs that don't have it
-    cur.execute("PRAGMA table_info(users)")
-    columns = [row[1] for row in cur.fetchall()]
-    if "email_verified" not in columns:
-        cur.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1")
-        conn.commit()
-    if "username" not in columns:
-        cur.execute("ALTER TABLE users ADD COLUMN username TEXT")
-        conn.commit()
-        # Backfill: set username from email prefix for existing users
-        cur.execute("UPDATE users SET username = lower(replace(replace(substr(email, 1, instr(email || '@', '@') - 1), '.', '_'), '+', '_')) WHERE username IS NULL")
-        conn.commit()
-    if "user_preferences" not in columns:
-        cur.execute("ALTER TABLE users ADD COLUMN user_preferences TEXT")
-        conn.commit()
+    
+    # Schema migration: Add email verification status to existing databases
+    cursor.execute("PRAGMA table_info(users)")
+    existing_columns = [row[1] for row in cursor.fetchall()]
+    
+    if "email_verified" not in existing_columns:
+        # Add email_verified column and assume all existing users are verified
+        cursor.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1")
+        connection.commit()
+    
+    # Schema migration: Add username field for user profiles
+    if "username" not in existing_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN username TEXT")
+        connection.commit()
+        # Backfill usernames from email addresses (take part before @)
+        cursor.execute("""
+            UPDATE users 
+            SET username = lower(
+                replace(
+                    replace(
+                        substr(email, 1, instr(email || '@', '@') - 1), 
+                    '.', '_'), 
+                '+', '_')
+            ) 
+            WHERE username IS NULL
+        """)
+        connection.commit()
+    
+    # Schema migration: Add user preferences storage
+    if "user_preferences" not in existing_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN user_preferences TEXT")
+        connection.commit()
     cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL")
 
     # Email verification codes (sent to user / shown in demo)

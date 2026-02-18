@@ -1,11 +1,16 @@
 """
-Hidden Gems — Web app (browser + mobile responsive).
-Run from project root: python -m web.app
-FBLA 2026
+Hidden Gems — Web Application (Browser + Mobile Responsive)
+
+A full-featured business discovery platform with user authentication, 
+favorites management, AI chatbot recommendations, and community reviews.
+
+Usage: python -m web.app (run from project root)
+Version: FBLA 2026
 """
 import sys
 import os
 
+# Setup path to allow imports from root
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
@@ -16,37 +21,106 @@ try:
     from dotenv import load_dotenv
     load_dotenv(os.path.join(ROOT, '.env'))
 except ImportError:
-    pass  # python-dotenv not installed, that's ok
+    pass  # python-dotenv not installed, which is fine
 
+# Flask and core imports
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from datetime import datetime
+
+# Application module imports
 from src.database.db import init_db
 from src.database import queries
-from src.logic.auth import hash_password, validate_login, register_user, is_valid_username, is_valid_email, is_valid_password, generate_verification_code
+from src.logic.auth import (
+    hash_password, validate_login, register_user, is_valid_username, 
+    is_valid_email, is_valid_password, generate_verification_code
+)
 from src.logic.chatbot import chat_with_ai, get_welcome_message
 from src.logic.email_sender import send_verification_email, is_email_configured, send_password_reset_email
 
+# Initialize Flask application
 app = Flask(__name__, template_folder="templates", static_folder="static")
+
+# Security and session configuration
 app.secret_key = os.environ.get("SECRET_KEY", "hidden-gems-fbla-2026-dev-secret-key-change-in-production")
-app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024  # 4MB
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
+app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024  # 4MB file upload limit
+app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent JavaScript access to session cookies
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
+app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24-hour session timeout
 
 
 def current_user():
+    """
+    Retrieve the currently logged-in user from the session.
+    
+    Returns:
+        dict: User object with 'id', 'email', and 'username' keys, or None if not authenticated
+    """
+    # Check if required session data is present
     if "user_id" not in session or "email" not in session:
         return None
+    
+    # Get and normalize user email from session
     user_email = session.get("email", "").strip().lower()
     if not user_email:
         return None
-    u = queries.user_by_email(user_email)
-    if not u:
+    
+    # Query database for user details
+    user = queries.user_by_email(user_email)
+    if not user:
         return None
-    return {"id": u["id"], "email": u["email"], "username": u.get("username") or u["email"]}
+    
+    # Return standardized user object
+    return {
+        "id": user["id"], 
+        "email": user["email"], 
+        "username": user.get("username") or user["email"]
+    }
 
 
-@app.route("/")
+def get_paginated_items(items, page=1, items_per_page=12):
+    """
+    Calculate pagination for a list of items.
+    
+    Args:
+        items (list): The complete list of items to paginate
+        page (int): Current page number (1-indexed)
+        items_per_page (int): Number of items per page
+    
+    Returns:
+        dict: Contains 'items', 'page', 'total_pages', 'total_items'
+    """
+    # Validate page number
+    try:
+        page = max(1, int(page))
+    except (ValueError, TypeError):
+        page = 1
+    
+    # Calculate pagination bounds
+    total_items = len(items)
+    total_pages = (total_items + items_per_page - 1) // items_per_page
+    
+    # Ensure page is within valid range
+    if page > total_pages and total_pages > 0:
+        page = total_pages
+    
+    # Get slice of items for current page
+    start_idx = (page - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    paginated_items = items[start_idx:end_idx]
+    
+    return {
+        "items": paginated_items,
+        "page": page,
+        "total_pages": total_pages,
+        "total_items": total_items
+    }
+
+
+# ============================================
+# AUTHENTICATION & SESSION ROUTES
+# ============================================
+
+
 def index():
     if current_user():
         businesses = queries.get_all_businesses()
