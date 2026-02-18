@@ -195,10 +195,12 @@ def register():
                         if email_ok:
                             flash(f"Account created! A verification code has been sent to {email}.", "success")
                         else:
-                            flash(f"Account created! However, we couldn't send the email: {email_error}. Your code is: {code}", "warning")
+                            # Email sending failed - provide code directly
+                            flash(f"Account created! Email delivery is currently unavailable.", "warning")
+                            flash(f"Please use this verification code: {code}", "info")
                     else:
                         # Email not configured - show code directly (dev mode)
-                        flash(f"Account created! Email not configured. Your verification code is: {code}", "warning")
+                        flash(f"Account created! Your verification code is: {code}", "info")
                     
                     return redirect(url_for("verify"))
                 else:
@@ -279,9 +281,10 @@ def resend_verification():
         if email_ok:
             flash("A new verification code has been sent to your email.", "success")
         else:
-            flash(f"Couldn't send email: {email_error}. Your code is: {code}", "warning")
+            flash("Email delivery is currently unavailable.", "warning")
+            flash(f"Please use this verification code: {code}", "info")
     else:
-        flash(f"Email not configured. Your new verification code is: {code}", "warning")
+        flash(f"Your new verification code is: {code}", "info")
     
     return redirect(url_for("verify"))
 
