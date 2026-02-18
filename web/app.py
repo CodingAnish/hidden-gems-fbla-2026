@@ -1027,7 +1027,8 @@ def run_web():
     from src.database import seed
     seed.ensure_seed_data()
     debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
-    app.run(host="0.0.0.0", port=5001, debug=debug_mode)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
 
 
 if __name__ == "__main__":
