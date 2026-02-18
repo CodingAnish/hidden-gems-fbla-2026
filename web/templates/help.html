@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Help{% endblock %}
+{% block content %}
+
+<!-- Hero Section with Green Theme -->
+<section class="hero" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); position: relative; overflow: hidden;">
+  <div style="position: absolute; top: -20%; left: -10%; opacity: 0.1; font-size: 280px;">🌿</div>
+  <div style="position: relative; z-index: 1;">
+    <h1 class="page-title" style="color: white;"> Help & Support</h1>
+    <p class="page-subtitle" style="color: rgba(255,255,255,0.95);">Learn how to make the most of Hidden Gems</p>
+  </div>
+</section>
+
+<div style="max-width: 900px; margin: 0 auto; padding: 0 1rem;">
+  
+  <!-- Quick Links Navigation -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin: 2rem 0; margin-bottom: 3rem;">
+    <a href="#getting-started" style="background: linear-gradient(135deg, #d5f4e6 0%, #c9f0dd 100%); padding: 1.5rem; border-radius: 12px; border-left: 5px solid #27ae60; text-decoration: none; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">📖</div>
+      <div style="font-weight: 600; color: #2c3e50;">Getting Started</div>
+    </a>
+    <a href="#account" style="background: linear-gradient(135deg, #d5f4e6 0%, #c9f0dd 100%); padding: 1.5rem; border-radius: 12px; border-left: 5px solid #27ae60; text-decoration: none; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;"></div>
+      <div style="font-weight: 600; color: #2c3e50;">Account & Favorites</div>
+    </a>
+    <a href="#features" style="background: linear-gradient(135deg, #d5f4e6 0%, #c9f0dd 100%); padding: 1.5rem; border-radius: 12px; border-left: 5px solid #27ae60; text-decoration: none; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;"></div>
+      <div style="font-weight: 600; color: #2c3e50;">Features & Tips</div>
+    </a>
+  </div>
+
+  <!-- Welcome Section -->
+  <div style="background: linear-gradient(135deg, #f0fdf4 0%, #f0fdf4 100%); border-radius: 12px; padding: 2rem; border-left: 5px solid #27ae60; margin-bottom: 2.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+    <h2 style="font-size: 1.6rem; font-weight: 700; color: #2c3e50; margin: 0 0 1rem 0;">🌟 Welcome to Hidden Gems</h2>
+    <p style="font-size: 1.05rem; line-height: 1.7; color: #555; margin: 0;">Hidden Gems helps you discover and support small local businesses in Richmond, VA. Find great restaurants, shops, services, entertainment, and wellness businesses all in one place. Our mission is to put local businesses on the map and help you find authentic, quality experiences.</p>
+  </div>
+
+  <!-- Getting Started Section -->
+  <div id="getting-started" style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 2.5rem;">
+    <h2 style="font-size: 1.5rem; font-weight: 700; color: #27ae60; margin: 0 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 3px solid #27ae60;">📖 Getting Started</h2>
+    
+    <div style="display: grid; gap: 1.5rem;">
+      <div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin: 0 0 0.5rem 0;">🏪 Directory — Browse All Businesses</h3>
+        <p style="font-size: 1rem; line-height: 1.6; color: #666; margin: 0; padding-left: 1rem; border-left: 3px solid #27ae60;">Browse all businesses using powerful filters for category, ratings, and more. Sort by name, rating, or most reviewed. Click any business card to see photos, hours, ratings, and customer reviews.</p>
+      </div>
+
+      <div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin: 0 0 0.5rem 0;"> Trending — Discover What's Hot</h3>
+        <p style="font-size: 1rem; line-height: 1.6; color: #666; margin: 0; padding-left: 1rem; border-left: 3px solid #e74c3c;">Find the most popular and highest-rated businesses in Richmond right now. Each business displays its ranking (#1, #2, #3) so you can see what's trending in your community.</p>
+      </div>
+
+      <div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin: 0 0 0.5rem 0;" style="font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin: 0 0 0.5rem 0;">For You — Personalized Picks</h3>
+        <p style="font-size: 1rem; line-height: 1.6; color: #666; margin: 0; padding-left: 1rem; border-left: 3px solid #9b59b6;">Get personalized recommendations based on your saved favorites. The more businesses you save, the better our suggestions become. Each recommendation shows a match percentage so you know how well it fits your taste.</p>
+      </div>
+
+      <div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin: 0 0 0.5rem 0;"> Deals — Exclusive Offers</h3>
+        <p style="font-size: 1rem; line-height: 1.6; color: #666; margin: 0; padding-left: 1rem; border-left: 3px solid #f39c12;">Find exclusive discounts and special offers from your favorite local businesses. Copy coupon codes with one click, then present them in-store or enter them online to claim your discount.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account & Favorites Section -->
+  <div id="account" style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 2.5rem;">
+    <h2 style="font-size: 1.5rem; font-weight: 700; color: #27ae60; margin: 0 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 3px solid #27ae60;"> Account & Favorites</h2>
+    
+    <div style="display: grid; gap: 1.5rem;">
+      <div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin: 0 0 0.5rem 0;"> Save Your Favorites</h3>
+        <p style="font-size: 1rem; line-height: 1.6; color: #666; margin: 0; padding-left: 1rem; border-left: 3px solid #27ae60;">Click the heart icon (♡) on any business card to save it to your favorites. Saved businesses will appear on your Favorites page and influence your personalized recommendations. You can manage all your saved businesses from the Favorites page.</p>
+      </div>
+
+      <div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin: 0 0 0.5rem 0;"> Write Reviews</h3>
+        <p style="font-size: 1rem; line-height: 1.6; color: #666; margin: 0; padding-left: 1rem; border-left: 3px solid #27ae60;">Share your experience with others! On any business page, click the review button (💬) to add your rating (1–5 stars), write your comment (minimum 10 characters), and complete a quick verification. Your honest feedback helps other customers discover great places to visit.</p>
+      </div>
+
+      <div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin: 0 0 0.5rem 0;">🔐 Your Privacy</h3>
+        <p style="font-size: 1rem; line-height: 1.6; color: #666; margin: 0; padding-left: 1rem; border-left: 3px solid #27ae60;">Favorites are saved locally on your device. Reviews are submitted to our database and visible to all users to help the community discover great businesses. Review names are displayed publicly to verify authenticity. No other personal information is collected or shared.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features & Tips Section -->
+  <div id="features" style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 2.5rem;">
+    <h2 style="font-size: 1.5rem; font-weight: 700; color: #27ae60; margin: 0 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 3px solid #27ae60;"> Features & Tips</h2>
+    
+    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #f0fdf4 100%); padding: 1.5rem; border-radius: 12px; border-left: 5px solid #27ae60; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: #2c3e50; margin: 0 0 1rem 0;">About Pro Tips</h3>
+      <ul style="margin: 0; padding-left: 1.5rem; font-size: 1rem; line-height: 1.8; color: #666;">
+        <li> Open the AI chatbot (💬) to ask questions about businesses and get instant, personalized recommendations</li>
+        <li> Use filters to narrow down businesses by category and sort by rating or reviews</li>
+        <li> Check the Trending page regularly to discover new popular businesses</li>
+        <li> Never miss a deal — copy coupon codes directly to your clipboard</li>
+        <li>🌟 Your reviews help small businesses grow and improve</li>
+        <li> Hidden Gems is optimized for both desktop and mobile browsers for seamless access anywhere</li>
+      </ul>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #fff8e1 0%, #fff8e1 100%); padding: 1.5rem; border-radius: 12px; border-left: 5px solid #f39c12;">
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: #2c3e50; margin: 0 0 1rem 0;">📢 About Hidden Gems</h3>
+      <p style="margin: 0; font-size: 1rem; line-height: 1.6; color: #666;">
+        Hidden Gems was created as a student project for the FBLA Coding & Programming competition. We believe in supporting local businesses and helping communities discover authentic, quality experiences. Our platform combines AI technology, user reviews, and exclusive deals to make local discovery easy and fun.
+      </p>
+    </div>
+  </div>
+
+  <!-- FAQ Section -->
+  <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 3rem;">
+    <h2 style="font-size: 1.5rem; font-weight: 700; color: #27ae60; margin: 0 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 3px solid #27ae60;"> Frequently Asked Questions</h2>
+    
+    <div style="display: grid; gap: 1.2rem;">
+      <div style="padding: 1.2rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-weight: 600;">Is Hidden Gems free to use?</h4>
+        <p style="margin: 0; color: #666; font-size: 0.95rem;">Yes! Hidden Gems is completely free. You can browse businesses, read reviews, save favorites, and view deals without any cost.</p>
+      </div>
+
+      <div style="padding: 1.2rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-weight: 600;">How do I report an incorrect business listing?</h4>
+        <p style="margin: 0; color: #666; font-size: 0.95rem;">Use the help button in the app to report issues. We review all reports and update listings regularly to keep information accurate.</p>
+      </div>
+
+      <div style="padding: 1.2rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-weight: 600;">Can I contact the businesses directly?</h4>
+        <p style="margin: 0; color: #666; font-size: 0.95rem;">Each business listing shows their phone number and website. Click through to contact them directly with questions or to book appointments.</p>
+      </div>
+
+      <div style="padding: 1.2rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-weight: 600;">How often are deals updated?</h4>
+        <p style="margin: 0; color: #666; font-size: 0.95rem;">Deals are updated regularly as businesses add new offers. Check back frequently to find the latest discounts and special promotions.</p>
+      </div>
+
+      <div style="padding: 1.2rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-weight: 600;">How do I write a review?</h4>
+        <p style="margin: 0; color: #666; font-size: 0.95rem;">Find the business you want to review, click the review button, select your star rating (1–5), write your comment (minimum 10 characters), and complete the simple verification challenge. Your review will appear immediately to help other customers.</p>
+      </div>
+
+      <div style="padding: 1.2rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-weight: 600;">Why do I need to verify I'm human when reviewing?</h4>
+        <p style="margin: 0; color: #666; font-size: 0.95rem;">We use simple verification (solving a basic math problem) to prevent fake reviews and spam. This ensures all reviews come from real customers and maintains community trust.</p>
+      </div>
+
+      <div style="padding: 1.2rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-weight: 600;">Why does my match percentage change on the For You page?</h4>
+        <p style="margin: 0; color: #666; font-size: 0.95rem;">Your match percentage is calculated based on the categories and types of businesses you've saved as favorites. As you save more businesses, our algorithm learns your preferences and updates match scores accordingly.</p>
+      </div>
+
+      <div style="padding: 1.2rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-weight: 600;">Do deals expire?</h4>
+        <p style="margin: 0; color: #666; font-size: 0.95rem;">Yes! Each deal shows an expiration date. Check the Deals page regularly for the latest offers, and use codes before they expire to claim your discounts.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Help Button -->
+<button class="help-btn" onclick="Help.toggle()" aria-label="Open help menu"> Help</button>
+
+{% endblock %}

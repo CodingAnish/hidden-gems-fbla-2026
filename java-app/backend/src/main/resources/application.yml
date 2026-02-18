@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: hidden-gems-api
+
+  datasource:
+    url: jdbc:sqlite:${DB_PATH:./data/hiddengems.db}
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /api
+
+# JWT (override in production via env)
+app:
+  jwt:
+    secret: ${JWT_SECRET:default-dev-secret-change-in-production-to-secure-key-32-chars-minimum}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+# CORS allowed origins (frontend)
+cors:
+  allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}

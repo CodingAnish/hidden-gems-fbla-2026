@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}Directory{% endblock %}
+{% block content %}
+
+<section class="hero" style="background: linear-gradient(135deg, #2563EB 0%, #1e40af 100%);">
+  <h1 class="page-title" style="color: white;">Discover Richmond Gems</h1>
+  <p class="page-subtitle" style="color: rgba(255,255,255,0.95);">Explore exceptional local businesses and support your community</p>
+</section>
+
+<!-- UNIFIED SEARCH & FILTER SECTION -->
+<div style="background: white; padding: 2rem; margin: 0 0 2rem 0; border-bottom: 3px solid #2563EB; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+  <form method="get" action="{{ url_for('directory') }}" style="display: grid; gap: 1.5rem; max-width: 1200px; margin: 0 auto;">
+    <!-- Main search bar -->
+    <div style="display: grid; grid-template-columns: 1fr 150px 180px 120px; gap: 1rem; align-items: flex-end;">
+      <div>
+        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: #2c3e50;"> Search</label>
+        <input type="text" 
+               id="search-input"
+               name="q" 
+               value="{{ request.args.get('q', '') }}" 
+               placeholder="Search by name or type..." 
+               style="width: 100%; padding: 0.9rem 1.25rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; transition: all 0.3s;">
+      </div>
+      
+      <div>
+        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: #2c3e50;">Category</label>
+        <select name="category" style="width: 100%; padding: 0.9rem 1rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+          {% for c in categories %}
+          <option value="{{ c }}" {% if request.args.get('category', 'All') == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: #2c3e50;">Sort</label>
+        <select name="sort" style="width: 100%; padding: 0.9rem 1rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+          <option value="name" {% if request.args.get('sort') == 'name' %}selected{% endif %}>Name (A–Z)</option>
+          <option value="rating_high" {% if request.args.get('sort') == 'rating_high' %}selected{% endif %}>Rating (High to Low)</option>
+          <option value="rating_low" {% if request.args.get('sort') == 'rating_low' %}selected{% endif %}>Rating (Low to High)</option>
+          <option value="reviews" {% if request.args.get('sort') == 'reviews' %}selected{% endif %}>Reviews (Most to Least)</option>
+          <option value="reviews_low" {% if request.args.get('sort') == 'reviews_low' %}selected{% endif %}>Reviews (Least to Most)</option>
+        </select>
+      </div>
+
+      <button type="submit" style="background: linear-gradient(135deg, #2563EB 0%, #1e40af 100%); color: white; border: none; padding: 0.9rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s; height: fit-content;">
+        Search
+      </button>
+    </div>
+
+
+  </form>
+</div>
+
+<!-- Results counter -->
+<div style="padding: 0 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin-left: auto; margin-right: auto;">
+  <p style="color: #666; font-weight: 500;">Showing {% if businesses %}{{ (page-1)*12 + 1 }}-{{ (page-1)*12 + businesses|length }}{% else %}0{% endif %} of {{ total_businesses }} businesses (Page {{ page }} of {{ total_pages }})</p>
+</div>
+
+{% if businesses %}
+<div class="grid" style="margin-bottom: 3.5rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 1rem;">
+  {% for b in businesses %}
+  <div class="business-card" 
+       data-business-id="{{ b.id }}"
+       data-business-name="{{ b.name }}"
+       data-category="{{ b.category }}"
+       data-rating="{{ b.average_rating or 0 }}"
+       data-reviews="{{ b.total_reviews or 0 }}"
+       style="transition: all 0.3s ease; cursor: pointer;">
+    <div class="business-card-image" style="height: 200px; font-size: 64px; background-size: cover; background-position: center; {% if b.photo_url %}background-image: url('{{ b.photo_url }}'); background-color: rgba(0,0,0,0.1);{% else %}background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);{% endif %} display: flex; align-items: center; justify-content: center; {% if not b.photo_url %}backdrop-filter: blur(4px);{% else %}opacity: 0.95;{% endif %} position: relative;">
+      {% if b.deals and b.deals[0] %}
+      <div style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 0.5rem 0.9rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10; animation: pulse 2s ease-in-out infinite;">
+        🎟️ DEAL
+      </div>
+      {% endif %}
+      {% if not b.photo_url %}
+        {% if b.category == 'Food' %}
+        {% elif b.category == 'Retail' %}
+        {% elif b.category == 'Services' %}
+        {% elif b.category == 'Entertainment' %}
+        {% elif b.category == 'Health and Wellness' %}
+
+        {% else %}
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="business-card-content" style="padding: 1.5rem;">
+      <!-- Colored Category Badge -->
+      <span class="business-category" style="margin-bottom: 1rem; display: inline-block; padding: 0.4rem 0.85rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; color: white;
+        {% if b.category == 'Food' %}background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        {% elif b.category == 'Retail' %}background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        {% elif b.category == 'Services' %}background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        {% elif b.category == 'Entertainment' %}background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        {% elif b.category == 'Health and Wellness' %}background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        {% else %}background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        {% endif %}">
+        {{ b.category or 'Other' }}
+      </span>
+      
+      <h3 class="business-card-title" style="margin-bottom: 0.75rem; font-size: 1.15rem;">{{ b.name or 'Business' }}</h3>
+      
+      <div class="business-rating" style="margin-bottom: 1rem; font-size: 1.05rem;">
+        <span class="star">⭐</span>
+        <strong>{{ "%.1f"|format(b.average_rating or 0) }}</strong>
+        <span style="color: var(--color-text-muted); font-weight: 400; font-size: 0.95rem;">({{ b.total_reviews or 0 }} reviews)</span>
+      </div>
+
+      {% if b.summary %}
+      <p class="business-description" style="font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.6; color: var(--color-text-muted); font-style: italic;">{{ b.summary }}</p>
+      {% elif b.description %}
+      <p class="business-description" style="font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.7;">{{ b.description or 'A great local business.' }}</p>
+      {% else %}
+      <p class="business-description" style="font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.7;">A great local business in Richmond.</p>
+      {% endif %}
+
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem;">
+        {% if b.address %}
+        <div class="business-card-address" style="display: flex; align-items: center; gap: 0.4rem; flex: 1;">
+          <span></span>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ b.address }}</span>
+        </div>
+        {% endif %}
+        
+        {% if b.price_range %}
+        <div style="background: #fef3c7; padding: 0.4rem 0.8rem; border-radius: var(--radius-md); font-weight: 600;">{{ b.price_range }}</div>
+        {% endif %}
+      </div>
+
+      <div class="business-card-actions" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: stretch;">
+        <a href="{{ url_for('business_detail', business_id=b.id) }}" class="btn btn-primary btn-sm" style="flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 600; transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+          View Details
+        </a>
+        <button 
+          type="button"
+          class="btn btn-ghost btn-sm" 
+          onclick="Reviews.openModal({{ b.id }}, '{{ b.name }}')"
+          title="Write a review for this business"
+          aria-label="Write review for {{ b.name }}"
+          style="min-width: 44px; min-height: 44px; padding: 0.85rem; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s; background: white; border: 2px solid #e0e0e0; border-radius: 6px; cursor: pointer;" onmouseover="this.style.transform='scale(1.1)'; this.style.backgroundColor='#f9f9f9'" onmouseout="this.style.transform='scale(1)'; this.style.backgroundColor='white'">
+          💬
+        </button>
+        <button 
+          type="button"
+          class="favorite-btn"
+          onclick="Favorites.toggle({{ b.id }}, '{{ b.name }}', this)"
+          title="Add to favorites"
+          aria-label="Add {{ b.name }} to favorites"
+          style="min-width: 44px; min-height: 44px; padding: 0.85rem; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s; background: white; border: 2px solid #e0e0e0; border-radius: 6px; cursor: pointer;" onmouseover="this.style.transform='scale(1.1)'; this.style.backgroundColor='#fff0f5'" onmouseout="this.style.transform='scale(1)'; this.style.backgroundColor='white'">
+          ♡
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pagination Controls -->
+<div style="display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin: 3rem 0; padding: 0 1rem; max-width: 1200px; margin-left: auto; margin-right: auto;">
+  {% if page > 1 %}
+  <a href="{{ url_for('directory', q=request.args.get('q', ''), category=request.args.get('category', 'All'), sort=request.args.get('sort', 'name'), page=page-1) }}" 
+     style="padding: 0.85rem 1.5rem; background: white; border: 2px solid #2563EB; color: #2563EB; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block;" 
+     onmouseover="this.style.backgroundColor='#2563EB'; this.style.color='white';" 
+     onmouseout="this.style.backgroundColor='white'; this.style.color='#2563EB';">
+    ← Previous
+  </a>
+  {% else %}
+  <button disabled 
+     style="padding: 0.85rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; color: #999; border-radius: 8px; font-weight: 600; cursor: not-allowed; opacity: 0.6;">
+    ← Previous
+  </button>
+  {% endif %}
+  
+  <span style="font-weight: 600; font-size: 1rem; color: #2c3e50;">
+    Page <span style="color: #2563EB;">{{ page }}</span> of <span style="color: #2563EB;">{{ total_pages }}</span>
+  </span>
+
+  <!-- Page Jump Form -->
+  {% if total_pages > 1 %}
+  <form method="get" action="{{ url_for('directory') }}" style="display: flex; gap: 0.5rem; align-items: center;">
+    <input type="hidden" name="q" value="{{ request.args.get('q', '') }}">
+    <input type="hidden" name="category" value="{{ request.args.get('category', 'All') }}">
+    <input type="hidden" name="sort" value="{{ request.args.get('sort', 'name') }}">
+    <label for="jump-page" style="font-weight: 600; font-size: 0.95rem; color: #2c3e50; margin: 0;">Go to page:</label>
+    <input type="number" 
+           id="jump-page" 
+           name="page" 
+           min="1" 
+           max="{{ total_pages }}" 
+           value="{{ page }}"
+           style="width: 80px; padding: 0.5rem 0.75rem; border: 2px solid #2563EB; border-radius: 6px; font-size: 0.95rem; font-weight: 600; color: #2563EB; text-align: center;">
+    <button type="submit" 
+            style="padding: 0.5rem 1rem; background: #2563EB; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.95rem; transition: all 0.3s;"
+            onmouseover="this.style.backgroundColor='#1e40af';"
+            onmouseout="this.style.backgroundColor='#2563EB';">
+      Jump
+    </button>
+  </form>
+  {% endif %}
+  
+  {% if page < total_pages %}
+  <a href="{{ url_for('directory', q=request.args.get('q', ''), category=request.args.get('category', 'All'), sort=request.args.get('sort', 'name'), page=page+1) }}" 
+     style="padding: 0.85rem 1.5rem; background: #2563EB; color: white; border: 2px solid #2563EB; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block;" 
+     onmouseover="this.style.backgroundColor='#1e40af';" 
+     onmouseout="this.style.backgroundColor='#2563EB';">
+    Next →
+  </a>
+  {% else %}
+  <button disabled 
+     style="padding: 0.85rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; color: #999; border-radius: 8px; font-weight: 600; cursor: not-allowed; opacity: 0.6;">
+    Next →
+  </button>
+  {% endif %}
+</div>
+
+{% else %}
+
+<div class="empty-state" style="padding: 4rem 2rem;">
+  <div class="empty-state-icon" style="font-size: 96px; margin-bottom: 1.5rem;"></div>
+  <h2 class="empty-state-title" style="font-size: 2rem; margin-bottom: 1rem;">No businesses found</h2>
+  <p class="empty-state-text" style="font-size: 1.05rem; margin-bottom: 2rem;">Try adjusting your filters or search terms</p>
+  <a href="{{ url_for('directory') }}" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1rem;">Clear Filters</a>
+</div>
+
+{% endif %}
+
+<!-- Help Button -->
+<button class="help-btn" onclick="Help.toggle()" aria-label="Open help menu"> Help</button>
+
+{% endblock %}

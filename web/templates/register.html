@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+
+<div style="display: flex; align-items: center; justify-content: center; min-height: 70vh; padding: 2rem;">
+  <div style="background: var(--color-surface); border-radius: var(--radius-xl); padding: 3rem; box-shadow: var(--shadow-xl); max-width: 450px; width: 100%;">
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+      <h1 style="font-size: 2.25rem; font-weight: 700; margin: 0 0 0.75rem 0; color: var(--color-text);">Join the Community</h1>
+      <p style="font-size: 1.05rem; color: var(--color-text-muted); margin: 0;">Create an account to save favorites and share reviews</p>
+    </div>
+
+    <form method="post" action="{{ url_for('register') }}" style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <label for="username" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Username</label>
+        <input type="text" id="username" name="username" required minlength="3" maxlength="30" autocomplete="username" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)';" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <label for="email" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)';" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <label for="password" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="new-password" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)'; checkPassword();" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';" oninput="checkPassword()">
+        <ul id="password-requirements" style="list-style: none; padding: 0; margin-top: 0.5rem; font-size: 0.9rem; display: none;">
+          <li id="req-length" style="color: #d9534f; margin-bottom: 0.25rem;">✗ At least 8 characters</li>
+          <li id="req-upper" style="color: #d9534f; margin-bottom: 0.25rem;">✗ One uppercase letter (A-Z)</li>
+          <li id="req-number" style="color: #d9534f; margin-bottom: 0.25rem;">✗ One number (0-9)</li>
+          <li id="req-symbol" style="color: #d9534f;">✗ One symbol (!@#$%^&* etc)</li>
+        </ul>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <label for="confirm" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Confirm password</label>
+        <input type="password" id="confirm" name="confirm" required autocomplete="new-password" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)';" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';">
+      </div>
+
+      <script>
+        function checkPassword() {
+          const password = document.getElementById('password').value;
+          const requirements = document.getElementById('password-requirements');
+          
+          // Only show requirements if user has started typing
+          if (password.length > 0) {
+            requirements.style.display = 'block';
+          } else {
+            requirements.style.display = 'none';
+            return;
+          }
+          
+          const hasLength = password.length >= 8;
+          const hasUpper = /[A-Z]/.test(password);
+          const hasNumber = /[0-9]/.test(password);
+          const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':\"\\,.<>?/]/.test(password);
+          
+          updateRequirement('req-length', hasLength);
+          updateRequirement('req-upper', hasUpper);
+          updateRequirement('req-number', hasNumber);
+          updateRequirement('req-symbol', hasSymbol);
+        }
+        
+        function updateRequirement(id, met) {
+          const element = document.getElementById(id);
+          if (met) {
+            element.style.color = '#5cb85c';
+            element.textContent = element.textContent.replace('✗', '✓');
+          } else {
+            element.style.color = '#d9534f';
+            element.textContent = element.textContent.replace('✓', '✗');
+          }
+        }
+      </script>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: 600; margin-top: 0.5rem;">Create Account</button>
+    </form>
+
+    <div style="display: flex; align-items: center; margin: 2rem 0; gap: 1rem;">
+      <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
+      <span style="font-size: 0.95rem; color: var(--color-text-muted);">Already registered?</span>
+      <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
+    </div>
+
+    <p style="text-align: center; font-size: 1rem; margin: 0; color: var(--color-text-muted);">
+      Already have an account? 
+      <a href="{{ url_for('login') }}" style="color: var(--color-text); text-decoration: none; font-weight: 600; transition: color var(--transition-base);" onmouseover="this.style.color='#555';" onmouseout="this.style.color='var(--color-text)';">Log in</a>
+    </p>
+  </div>
+</div>
+
+{% endblock %}

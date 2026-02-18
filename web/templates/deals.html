@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Deals{% endblock %}
+{% block content %}
+
+<!-- Hero with Deal Vibes -->
+<section class="hero" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); position: relative; overflow: hidden;">
+  <div style="position: absolute; top: -20%; right: -10%; opacity: 0.1; font-size: 280px;"></div>
+  <div style="position: relative; z-index: 1;">
+    <h1 class="page-title" style="color: white;"> Today's Deals</h1>
+    <p class="page-subtitle" style="color: rgba(255,255,255,0.95);">Exclusive offers and discounts just for you</p>
+  </div>
+</section>
+
+<!-- Active Deals Counter -->
+<div style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+  <div id="deals-counter" style="background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%); padding: 1.5rem; border-radius: 12px; border-left: 5px solid #f39c12; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
+    <div style="font-size: 2rem;"></div>
+    <div>
+      <span id="active-deals-count" style="font-weight: 700; font-size: 1.3rem; color: #f39c12;">4</span>
+      <span style="color: #666; margin-left: 0.5rem;">active deals available</span>
+    </div>
+  </div>
+</div>
+
+<!-- Deal of the Day -->
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem; margin-bottom: 2rem;">
+  <h2 style="font-size: 1.5rem; color: #2c3e50; margin-bottom: 1.5rem;">🏆 Deal of the Day</h2>
+  
+  <div style="background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%); border: 3px solid #f39c12; border-radius: 12px; overflow: hidden; display: grid; grid-template-columns: 400px 1fr; gap: 2rem; padding: 2rem; align-items: center;">
+    <!-- Deal Image -->
+    <div style="height: 300px; background: linear-gradient(135deg, #f9e5b4 0%, #f0d898 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 120px;">
+      🍔
+    </div>
+    
+    <!-- Deal Info -->
+    <div>
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+        <h3 style="margin: 0; font-size: 1.8rem; color: #2c3e50;">30% Off Your Next Meal</h3>
+        <span style="background: #e74c3c; color: white; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 700; font-size: 0.9rem;">Limited Time</span>
+      </div>
+      
+      <p style="color: #666; font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6;">
+        Enjoy 30% off any meal at your favorite restaurant. Valid on dine-in and takeout. Cannot be combined with other offers.
+      </p>
+      
+      <div style="background: white; padding: 1rem; border-radius: 8px; border: 2px solid #f39c12; margin-bottom: 1.5rem;">
+        <div style="color: #999; font-size: 0.9rem; margin-bottom: 0.5rem;">Coupon Code</div>
+        <div style="display: flex; align-items: center; gap: 1rem; font-family: 'Courier New', monospace;">
+          <span style="font-size: 1.3rem; font-weight: 700; color: #2c3e50;">DEAL30</span>
+          <button onclick="copyToClipboard('DEAL30', this)" style="background: #f39c12; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            Copy Code
+          </button>
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 1rem;">
+        <a href="#" class="btn btn-primary" style="flex: 1; text-align: center; padding: 0.9rem 1.5rem; font-size: 1rem; text-decoration: none; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+          View Restaurant
+        </a>
+        <button class="btn btn-ghost btn-sm" title="Save deal" style="padding: 0.9rem 1.5rem; font-size: 1rem; cursor: pointer; background: white; border: 2px solid #f39c12; border-radius: 8px; color: #f39c12; font-weight: 600;">
+           Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- All Active Deals -->
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2 style="font-size: 1.5rem; color: #2c3e50; margin: 0;">All Active Deals</h2>
+    <div style="display: flex; gap: 0.75rem;">
+      <select id="category-filter" onchange="filterDealsByCategory()" style="padding: 0.75rem 1rem; border: 2px solid #f39c12; border-radius: 6px; font-size: 0.95rem; background: white; cursor: pointer;">
+        <option value="">All Categories</option>
+        <option value="Food"> Food</option>
+        <option value="Retail"> Retail</option>
+        <option value="Services"> Services</option>
+        <option value="Entertainment"> Entertainment</option>
+        <option value="Health and Wellness"> Health & Wellness</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="grid" id="deals-grid">
+    <!-- Deal Card 1 -->
+    <div class="deal-card" data-category="Food" style="background: white; border-radius: 12px; overflow: hidden; border-left: 5px solid #e74c3c; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onmouseover="this.style.boxShadow='0 4px 16px rgba(231,76,60,0.2)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+      <div style="height: 150px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); display: flex; align-items: center; justify-content: center; font-size: 64px;">🍕</div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+          <h3 style="margin: 0; font-size: 1.15rem; color: #2c3e50;">Buy One Get One Free</h3>
+          <span style="background: #e74c3c; color: white; padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">50% OFF</span>
+        </div>
+        <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0 1rem;">Pizza Restaurant</p>
+        <p style="color: #666; font-size: 0.85rem; margin-bottom: 1rem;">Valid until Dec 31, 2024</p>
+        <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 6px; border: 1px solid #e74c3c; font-family: 'Courier New', monospace; margin-bottom: 1rem;">
+          <div style="color: #999; font-size: 0.8rem; margin-bottom: 0.3rem;">Code:</div>
+          <div style="font-weight: 700; color: #2c3e50;">PIZZA50</div>
+        </div>
+        <button onclick="copyToClipboard('PIZZA50', this)" style="width: 100%; background: #e74c3c; color: white; border: none; padding: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+          Copy Code
+        </button>
+      </div>
+    </div>
+    
+    <!-- Deal Card 2 -->
+    <div class="deal-card" data-category="Retail" style="background: white; border-radius: 12px; overflow: hidden; border-left: 5px solid #27ae60; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onmouseover="this.style.boxShadow='0 4px 16px rgba(39,174,96,0.2)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+      <div style="height: 150px; background: linear-gradient(135deg, #27ae60 0%, #229954 100%); display: flex; align-items: center; justify-content: center; font-size: 64px;">👟</div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+          <h3 style="margin: 0; font-size: 1.15rem; color: #2c3e50;">40% Off Sneakers</h3>
+          <span style="background: #27ae60; color: white; padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">40% OFF</span>
+        </div>
+        <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0 1rem;">Retail Store</p>
+        <p style="color: #666; font-size: 0.85rem; margin-bottom: 1rem;">Valid until Jan 15, 2025</p>
+        <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 6px; border: 1px solid #27ae60; font-family: 'Courier New', monospace; margin-bottom: 1rem;">
+          <div style="color: #999; font-size: 0.8rem; margin-bottom: 0.3rem;">Code:</div>
+          <div style="font-weight: 700; color: #2c3e50;">SHOE40</div>
+        </div>
+        <button onclick="copyToClipboard('SHOE40', this)" style="width: 100%; background: #27ae60; color: white; border: none; padding: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#229954'" onmouseout="this.style.background='#27ae60'">
+          Copy Code
+        </button>
+      </div>
+    </div>
+    
+    <!-- Deal Card 3 -->
+    <div class="deal-card" data-category="Entertainment" style="background: white; border-radius: 12px; overflow: hidden; border-left: 5px solid #9b59b6; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onmouseover="this.style.boxShadow='0 4px 16px rgba(155,89,182,0.2)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+      <div style="height: 150px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); display: flex; align-items: center; justify-content: center; font-size: 64px;">🎬</div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+          <h3 style="margin: 0; font-size: 1.15rem; color: #2c3e50;">2 Tickets, 1 Price</h3>
+          <span style="background: #9b59b6; color: white; padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">50% OFF</span>
+        </div>
+        <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0 1rem;">Movie Theater</p>
+        <p style="color: #666; font-size: 0.85rem; margin-bottom: 1rem;">Valid until Dec 25, 2024</p>
+        <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 6px; border: 1px solid #9b59b6; font-family: 'Courier New', monospace; margin-bottom: 1rem;">
+          <div style="color: #999; font-size: 0.8rem; margin-bottom: 0.3rem;">Code:</div>
+          <div style="font-weight: 700; color: #2c3e50;">MOVIE2FOR1</div>
+        </div>
+        <button onclick="copyToClipboard('MOVIE2FOR1', this)" style="width: 100%; background: #9b59b6; color: white; border: none; padding: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#8e44ad'" onmouseout="this.style.background='#9b59b6'">
+          Copy Code
+        </button>
+      </div>
+    </div>
+    
+    <!-- Deal Card 4 -->
+    <div class="deal-card" data-category="Health and Wellness" style="background: white; border-radius: 12px; overflow: hidden; border-left: 5px solid #f39c12; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onmouseover="this.style.boxShadow='0 4px 16px rgba(243,156,18,0.2)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+      <div style="height: 150px; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); display: flex; align-items: center; justify-content: center; font-size: 64px;"></div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+          <h3 style="margin: 0; font-size: 1.15rem; color: #2c3e50;">30-Day Gym FREE</h3>
+          <span style="background: #f39c12; color: white; padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">100% OFF</span>
+        </div>
+        <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0 1rem;">Fitness Center</p>
+        <p style="color: #666; font-size: 0.85rem; margin-bottom: 1rem;">Valid until Jan 5, 2025</p>
+        <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 6px; border: 1px solid #f39c12; font-family: 'Courier New', monospace; margin-bottom: 1rem;">
+          <div style="color: #999; font-size: 0.8rem; margin-bottom: 0.3rem;">Code:</div>
+          <div style="font-weight: 700; color: #2c3e50;">FITFREE30</div>
+        </div>
+        <button onclick="copyToClipboard('FITFREE30', this)" style="width: 100%; background: #f39c12; color: white; border: none; padding: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#e67e22'" onmouseout="this.style.background='#f39c12'">
+          Copy Code
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Empty State (if no deals) -->
+<div id="empty-deals-state" style="display: none; max-width: 1200px; margin: 3rem auto;">
+  <div class="empty-state" style="padding: 4rem 2rem; background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%); border-radius: 12px;">
+    <div style="font-size: 96px; margin-bottom: 1.5rem;"></div>
+    <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #2c3e50;">No deals right now</h2>
+    <p style="font-size: 1.05rem; margin-bottom: 2rem; color: #666;">Check back soon for new exclusive offers!</p>
+  </div>
+</div>
+
+<script>
+  function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(() => {
+      const originalText = button.textContent;
+      button.textContent = '✓ Copied!';
+      button.style.background = '#27ae60';
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = button.parentElement.style.borderColor || '#f39c12';
+      }, 2000);
+    });
+  }
+  
+  function filterDealsByCategory() {
+    const selectedCategory = document.getElementById('category-filter').value;
+    const dealCards = document.querySelectorAll('.deal-card');
+    let visibleCount = 0;
+    
+    dealCards.forEach(card => {
+      const cardCategory = card.getAttribute('data-category');
+      if (!selectedCategory || cardCategory === selectedCategory) {
+        card.style.display = '';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+    
+    document.getElementById('empty-deals-state').style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize active deals count
+    const activeDealCards = document.querySelectorAll('.deal-card').length;
+    document.getElementById('active-deals-count').textContent = activeDealCards;
+  });
+</script>
+
+<!-- Help Button -->
+<button class="help-btn" onclick="Help.toggle()" aria-label="Open help menu"> Help</button>
+
+{% endblock %}

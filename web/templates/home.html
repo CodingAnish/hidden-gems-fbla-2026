@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<!-- Hero Search Section -->
+<section class="hero" style="background: linear-gradient(135deg, var(--color-primary-light) 0%, #a5f3fc 50%, rgba(6, 182, 212, 0.05) 100%);">
+  <h1 class="page-title">Find Your Next Favorite</h1>
+  <p class="page-subtitle">Discover hidden gems, trending businesses, and exclusive deals in Richmond.</p>
+  
+  <form action="{{ url_for('directory') }}" method="get" style="display: flex; gap: 1rem; max-width: 600px; flex-wrap: wrap; margin-top: 2rem;">
+    <input type="text" name="q" placeholder="Search businesses, categories..." style="flex: 1; min-width: 250px; padding: 1rem 1.5rem; border: 2px solid white; border-radius: 10px; font-size: 1rem;">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+</section>
+
+<!-- Quick Browse Categories -->
+<div class="section">
+  <div class="section-header">
+    <h2 class="section-title">Browse by Category</h2>
+  </div>
+  <div class="category-chips">
+    <a href="{{ url_for('directory', category='Food') }}" class="category-chip" style="text-decoration: none;">
+       Food
+    </a>
+    <a href="{{ url_for('directory', category='Retail') }}" class="category-chip" style="text-decoration: none;">
+       Retail
+    </a>
+    <a href="{{ url_for('directory', category='Services') }}" class="category-chip" style="text-decoration: none;">
+       Services
+    </a>
+    <a href="{{ url_for('directory', category='Entertainment') }}" class="category-chip" style="text-decoration: none;">
+       Entertainment
+    </a>
+    <a href="{{ url_for('directory', category='Health and Wellness') }}" class="category-chip" style="text-decoration: none;">
+       Wellness
+    </a>
+    <a href="{{ url_for('directory') }}" class="category-chip" style="text-decoration: none;">
+      👁️ View All
+    </a>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Featured Businesses -->
+<div class="section">
+  <div class="section-header">
+    <h2 class="section-title">Featured This Week</h2>
+    <p class="section-subtitle">Handpicked local favorites</p>
+  </div>
+  
+  {% if featured %}
+  <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">
+    {% for b in featured[:6] %}
+    <div class="business-card">
+      <div class="business-card-image" style="height: 200px; font-size: 72px; background-size: cover; background-position: center; {% if b.photo_url %}background-image: url('{{ b.photo_url }}'); background-color: rgba(0,0,0,0.1);{% else %}background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);{% endif %} display: flex; align-items: center; justify-content: center; {% if not b.photo_url %}backdrop-filter: blur(4px);{% else %}opacity: 0.95;{% endif %}">
+        {% if not b.photo_url %}
+          {% if b.category == 'Food' %}
+          {% elif b.category == 'Retail' %}
+          {% elif b.category == 'Services' %}
+          {% elif b.category == 'Entertainment' %}
+          {% elif b.category == 'Health and Wellness' %}
+          {% else %}
+          {% endif %}
+        {% endif %}
+      </div>
+      <div class="business-card-content" style="padding: 1.5rem;">
+        <h3 class="business-card-title" style="margin-bottom: 0.75rem;">{{ b.name }}</h3>
+        <span class="business-category" style="margin-bottom: 1rem; display: inline-block;">{{ b.category }}</span>
+        <div class="business-rating" style="margin-bottom: 1rem;">
+          <span class="star">⭐</span>
+          <strong>{{ "%.1f"|format(b.average_rating or 0) }}</strong>
+          <span style="color: var(--color-text-muted); font-size: 0.9rem;">({{ b.total_reviews or 0 }})</span>
+        </div>
+        {% if b.summary %}
+        <p class="business-description" style="margin-bottom: 1.5rem; flex: 1; font-size: 0.9rem; color: var(--color-text-muted); font-style: italic;">{{ b.summary }}</p>
+        {% else %}
+        <p class="business-description" style="margin-bottom: 1.5rem; flex: 1;">{{ b.description or 'Great local business' }}</p>
+        {% endif %}
+        <a href="{{ url_for('business_detail', business_id=b.id) }}" class="btn btn-primary btn-sm" style="width: 100%; text-align: center;">View Details</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="divider"></div>
+
+<!-- Trending Section -->
+<div class="section">
+  <div class="section-header">
+    <h2 class="section-title"> Trending Now</h2>
+    <p class="section-subtitle">Most popular this week</p>
+  </div>
+  
+  {% if trending %}
+  <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">
+    {% for b in trending[:3] %}
+    <div class="business-card">
+      <div class="business-card-image" style="height: 200px; font-size: 72px; background-size: cover; background-position: center; {% if b.photo_url %}background-image: url('{{ b.photo_url }}'); background-color: rgba(0,0,0,0.1);{% else %}background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);{% endif %} display: flex; align-items: center; justify-content: center; {% if not b.photo_url %}backdrop-filter: blur(4px);{% else %}opacity: 0.95;{% endif %}">
+        {% if not b.photo_url %}
+          {% if b.category == 'Food' %}
+          {% elif b.category == 'Retail' %}
+          {% elif b.category == 'Services' %}
+          {% elif b.category == 'Entertainment' %}
+          {% elif b.category == 'Health and Wellness' %}
+          {% else %}
+          {% endif %}
+        {% endif %}
+      </div>
+      <div class="business-card-content" style="padding: 1.5rem;">
+        <h3 class="business-card-title" style="margin-bottom: 0.75rem;">{{ b.name }}</h3>
+        <span class="business-category" style="margin-bottom: 1rem; display: inline-block;">{{ b.category }}</span>
+        <div class="business-rating" style="margin-bottom: 1rem;">
+          <span class="star">⭐</span>
+          <strong>{{ "%.1f"|format(b.average_rating or 0) }}</strong>
+          <span style="color: var(--color-text-muted); font-size: 0.9rem;">({{ b.total_reviews or 0 }})</span>
+        </div>
+        {% if b.summary %}
+        <p class="business-description" style="margin-bottom: 1.5rem; flex: 1; font-size: 0.9rem; color: var(--color-text-muted); font-style: italic;">{{ b.summary }}</p>
+        {% else %}
+        <p class="business-description" style="margin-bottom: 1.5rem; flex: 1;">{{ b.description or 'Great local business' }}</p>
+        {% endif %}
+        <a href="{{ url_for('business_detail', business_id=b.id) }}" class="btn btn-primary btn-sm" style="width: 100%; text-align: center;">View Details</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  
+  <div style="text-align: center; margin-top: 2rem;">
+    <a href="{{ url_for('trending') }}" class="btn btn-secondary" style="padding: 1rem 2rem;">See All Trending →</a>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Call to Action -->
+<div style="background: linear-gradient(135deg, var(--color-bg-alt), var(--color-primary-light)); border-radius: var(--radius-lg); padding: 3rem 2rem; text-align: center; margin: 2rem 0;">
+  <h2 style="font-size: 2rem; margin: 0 0 1rem; color: var(--color-text);">Support Local Business</h2>
+  <p style="font-size: 1.05rem; color: var(--color-text-secondary); margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">Leave a review and help other discover the best local businesses in Richmond.</p>
+  <a href="{{ url_for('directory') }}" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1rem;">Start Exploring</a>
+</div>
+
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}Trending{% endblock %}
+{% block content %}
+
+<!-- Hero Section with Trending Vibe -->
+<section class="hero" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); position: relative; overflow: hidden;">
+  <div style="position: absolute; top: -20%; right: -10%; opacity: 0.1; font-size: 280px;"></div>
+  <div style="position: relative; z-index: 1;">
+    <h1 class="page-title" style="color: white;"> Trending Now</h1>
+    <p class="page-subtitle" style="color: rgba(255,255,255,0.95);">The hottest businesses everyone's talking about</p>
+  </div>
+</section>
+
+<!-- Stats Overview Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; padding: 2rem; background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%); margin-bottom: 3rem;">
+  <div style="padding: 1.5rem; background: white; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #e74c3c;">
+    <div style="font-size: 2rem; font-weight: 700; color: #e74c3c;">{{ businesses|length }}</div>
+    <div style="color: #666; font-weight: 500; margin-top: 0.5rem;">Total Trending</div>
+  </div>
+  <div style="padding: 1.5rem; background: white; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #27ae60;">
+    <div style="font-size: 2rem; font-weight: 700; color: #27ae60;">4.8★</div>
+    <div style="color: #666; font-weight: 500; margin-top: 0.5rem;">Average Rating</div>
+  </div>
+  <div style="padding: 1.5rem; background: white; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #f39c12;">
+    <div style="font-size: 2rem; font-weight: 700; color: #f39c12;">2.5K+</div>
+    <div style="color: #666; font-weight: 500; margin-top: 0.5rem;">Total Reviews</div>
+  </div>
+</div>
+
+{% if businesses %}
+<!-- #1 Hero Card - Make it Large and Prominent -->
+{% if businesses|length > 0 %}
+<div style="max-width: 1200px; margin: 0 auto 3rem; padding: 0 1rem;">
+  {% set top_business = businesses[0] %}
+  <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: grid; grid-template-columns: 350px 1fr; gap: 0;">
+    <!-- Image -->
+    <div style="height: 300px; font-size: 128px; background-size: cover; background-position: center; {% if top_business.photo_url %}background-image: url('{{ top_business.photo_url }}'); background-color: rgba(0,0,0,0.1);{% else %}background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);{% endif %} display: flex; align-items: center; justify-content: center; position: relative;">
+      <!-- Rank Badge -->
+      <div style="position: absolute; top: 20px; left: 20px; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <div style="font-size: 2rem;">#1</div>
+        <div style="font-size: 0.8rem;">TRENDING</div>
+      </div>
+      {% if not top_business.photo_url %}
+        {% if top_business.category == 'Food' %}
+        {% elif top_business.category == 'Retail' %}
+        {% elif top_business.category == 'Services' %}
+        {% elif top_business.category == 'Entertainment' %}
+        {% elif top_business.category == 'Health and Wellness' %}
+        {% else %}{% endif %}
+      {% endif %}
+    </div>
+    
+    <!-- Content -->
+    <div style="padding: 2.5rem;">
+      <span style="display: inline-block; padding: 0.5rem 1rem; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"> #1 Trending</span>
+      
+      <h2 style="margin: 1rem 0 0.5rem; font-size: 1.8rem; color: #2c3e50;">{{ top_business.name }}</h2>
+      <p style="color: #666; margin: 0 0 1.5rem; font-size: 0.95rem;">{{ top_business.summary or top_business.description }}</p>
+      
+      <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #f0f0f0;">
+        <div>
+          <div style="font-size: 1.3rem; font-weight: 700; color: #e74c3c;">{{ "%.1f"|format(top_business.average_rating or 0) }}★</div>
+          <div style="color: #999; font-size: 0.9rem;">{{ top_business.total_reviews or 0 }} reviews</div>
+        </div>
+        <div>
+          <div style="font-size: 1.3rem; font-weight: 700; color: #27ae60;">{{ top_business.category }}</div>
+          <div style="color: #999; font-size: 0.9rem;"> {{ top_business.address }}</div>
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 1rem;">
+        <a href="{{ url_for('business_detail', business_id=top_business.id) }}" style="flex: 1; padding: 1rem 1.5rem; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; text-align: center; text-decoration: none; transition: all 0.3s;">
+          View Full Details →
+        </a>
+        <button type="button" onclick="Reviews.openModal({{ top_business.id }}, '{{ top_business.name }}')" style="padding: 1rem 1.5rem; background: white; border: 2px solid #e74c3c; color: #e74c3c; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+           Write Review
+        </button>
+        <button type="button" onclick="Favorites.toggle({{ top_business.id }}, '{{ top_business.name }}', this)" class="favorite-btn" style="padding: 1rem 1.5rem; background: white; border: 2px solid #e74c3c; color: #e74c3c; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+           ♡ Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Grid of Remaining Trending Businesses with Rank Badges -->
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
+  <h2 style="font-size: 1.5rem; color: #2c3e50; margin-bottom: 1.5rem;">🌟 Other Trending Businesses</h2>
+  
+  <!-- Results counter -->
+  <div style="padding: 0; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <p style="color: #666; font-weight: 500;">Showing {% if businesses|length > 1 %}{{ (page-1)*12 + 2 }}-{{ (page-1)*12 + businesses|length }}{% else %}0{% endif %} of {{ total_businesses }} businesses (Page {{ page }} of {{ total_pages }})</p>
+  </div>
+
+  <div class="grid" style="margin-bottom: 3.5rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+    {% for b in businesses[1:] %}
+    <div class="business-card" style="transition: all 0.3s ease; position: relative;">
+      <!-- Rank Badge -->
+      {% set rank = loop.index + 1 %}
+      <div style="position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10;">
+        #{{ rank }}
+      </div>
+      
+      <div class="business-card-image" style="height: 200px; font-size: 64px; background-size: cover; background-position: center; {% if b.photo_url %}background-image: url('{{ b.photo_url }}'); background-color: rgba(0,0,0,0.1);{% else %}background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);{% endif %} display: flex; align-items: center; justify-content: center; {% if not b.photo_url %}backdrop-filter: blur(4px);{% else %}opacity: 0.95;{% endif %}">
+        {% if not b.photo_url %}
+          {% if b.category == 'Food' %}
+          {% elif b.category == 'Retail' %}
+          {% elif b.category == 'Services' %}
+          {% elif b.category == 'Entertainment' %}
+          {% elif b.category == 'Health and Wellness' %}
+          {% else %}{% endif %}
+        {% endif %}
+      </div>
+      
+      <div class="business-card-content" style="padding: 1.5rem;">
+        <!-- Category Badge -->
+        <span style="display: inline-block; padding: 0.4rem 0.85rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; color: white;
+          {% if b.category == 'Food' %}background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+          {% elif b.category == 'Retail' %}background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+          {% elif b.category == 'Services' %}background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+          {% elif b.category == 'Entertainment' %}background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+          {% elif b.category == 'Health and Wellness' %}background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+          {% else %}background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+          {% endif %}">
+          {{ b.category }}
+        </span>
+        
+        <h3 style="margin: 1rem 0 0.5rem; font-size: 1.1rem; color: #2c3e50;">{{ b.name }}</h3>
+        
+        <div style="display: flex; gap: 1.5rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #f0f0f0;">
+          <div>
+            <div style="font-size: 1.2rem; font-weight: 700; color: #e74c3c;">{{ "%.1f"|format(b.average_rating or 0) }}★</div>
+            <div style="color: #999; font-size: 0.85rem;">{{ b.total_reviews or 0 }} reviews</div>
+          </div>
+        </div>
+        
+        <div class="business-card-actions" style="gap: 0.75rem; flex-wrap: wrap;">
+          <a href="{{ url_for('business_detail', business_id=b.id) }}" class="btn btn-primary btn-sm" style="flex: 1; text-align: center; padding: 0.85rem 1rem; font-size: 0.95rem; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            View Details
+          </a>
+          <button 
+            type="button"
+            class="btn btn-ghost btn-sm" 
+            onclick="Reviews.openModal({{ b.id }}, '{{ b.name }}')"
+            title="Write a review"
+            style="padding: 0.85rem 0.9rem; font-size: 1.1rem; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+            💬
+          </button>
+          <button 
+            type="button"
+            class="favorite-btn"
+            onclick="Favorites.toggle({{ b.id }}, '{{ b.name }}', this)"
+            title="Add to favorites"
+            style="padding: 0.85rem 0.9rem; font-size: 1.1rem; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+            ♡
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination Controls -->
+  <div style="display: flex; justify-content: center; align-items: center; gap: 1.5rem; flex-wrap: wrap; margin: 3rem 0; padding: 0;">
+    {% if page > 1 %}
+    <a href="{{ url_for('trending', page=page-1) }}" 
+       style="padding: 0.85rem 1.5rem; background: white; border: 2px solid #2563EB; color: #2563EB; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block;" 
+       onmouseover="this.style.backgroundColor='#2563EB'; this.style.color='white';" 
+       onmouseout="this.style.backgroundColor='white'; this.style.color='#2563EB';">
+      ← Previous
+    </a>
+    {% else %}
+    <button disabled 
+       style="padding: 0.85rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; color: #999; border-radius: 8px; font-weight: 600; cursor: not-allowed; opacity: 0.6;">
+      ← Previous
+    </button>
+    {% endif %}
+    
+    <span style="font-weight: 600; font-size: 1rem; color: #2c3e50;">
+      Page <span style="color: #2563EB;">{{ page }}</span> of <span style="color: #2563EB;">{{ total_pages }}</span>
+    </span>
+
+    <!-- Page Jump Input -->
+    <form method="get" action="{{ url_for('trending') }}" style="display: flex; align-items: center; gap: 0.5rem;">
+      <input type="number" name="page" min="1" max="{{ total_pages }}" value="{{ page }}" style="width: 60px; padding: 0.6rem; border: 2px solid #2563EB; border-radius: 6px; text-align: center; font-weight: 600;" placeholder="Go to page">
+      <button type="submit" style="padding: 0.6rem 1rem; background: #2563EB; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.backgroundColor='#1e40af';" onmouseout="this.style.backgroundColor='#2563EB';">Go</button>
+    </form>
+    
+    {% if page < total_pages %}
+    <a href="{{ url_for('trending', page=page+1) }}" 
+       style="padding: 0.85rem 1.5rem; background: #2563EB; color: white; border: 2px solid #2563EB; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block;" 
+       onmouseover="this.style.backgroundColor='#1e40af';" 
+       onmouseout="this.style.backgroundColor='#2563EB';">
+      Next →
+    </a>
+    {% else %}
+    <button disabled 
+       style="padding: 0.85rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; color: #999; border-radius: 8px; font-weight: 600; cursor: not-allowed; opacity: 0.6;">
+      Next →
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+{% else %}
+<div class="empty-state" style="padding: 4rem 2rem;">
+  <div style="font-size: 96px; margin-bottom: 1.5rem;"></div>
+  <h2 style="font-size: 2rem; margin-bottom: 1rem;">No trending businesses yet</h2>
+  <p style="font-size: 1.05rem; margin-bottom: 2rem;">Check back soon for the app to track trending businesses</p>
+  <a href="{{ url_for('directory') }}" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1rem; text-decoration: none; display: inline-block;">Explore Directory</a>
+</div>
+{% endif %}
+
+<!-- Help Button -->
+<button class="help-btn" onclick="Help.toggle()" aria-label="Open help menu"> Help</button>
+
+{% endblock %}

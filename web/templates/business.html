@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}{{ business.name }}{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('directory') }}" class="btn btn-ghost btn-sm" style="margin-bottom: 3rem;">
+  ← Back to Directory
+</a>
+
+<div class="card" style="margin-bottom: 3rem; box-shadow: var(--shadow-lg);">
+  <div style="background: linear-gradient(135deg, #dbeafe, #2563EB); padding: 4rem 2rem; border-radius: var(--radius-lg); text-align: center; margin: -2rem -2rem 2.5rem -2rem; font-size: 96px; display: flex; align-items: center; justify-content: center;">
+    {% if business.category == 'Food' %}
+    {% elif business.category == 'Retail' %}
+    {% elif business.category == 'Services' %}
+    {% elif business.category == 'Entertainment' %}
+    {% elif business.category == 'Health and Wellness' %}
+    {% else %}
+    {% endif %}
+  </div>
+  
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; margin-bottom: 2.5rem;">
+    <div>
+      <h1 class="page-title" style="margin: 0 0 1rem; font-size: 2.75rem;">{{ business.name or 'Business' }}</h1>
+      <span class="business-category" style="font-size: 0.95rem; padding: 0.65rem 1rem;">{{ business.category or 'Other' }}</span>
+    </div>
+    {% if is_fav %}
+    <form method="post" action="{{ url_for('favorite_remove', business_id=business.id) }}" style="display: inline;">
+      <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.85rem 1.5rem; font-size: 0.95rem;">♥ Remove Favorite</button>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('favorite_add', business_id=business.id) }}" style="display: inline;">
+      <button type="submit" class="btn btn-ghost btn-sm" style="padding: 0.85rem 1.5rem; font-size: 0.95rem;">♥ Add Favorite</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if business.photo_url %}
+  <div style="margin-bottom: 2.5rem; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg);">
+    <img src="{{ business.photo_url }}" alt="{{ business.name }}" style="width: 100%; height: 280px; object-fit: cover; display: block;">
+  </div>
+  {% endif %}
+
+  {% if business.summary %}
+  <div style="margin-bottom: 2.5rem; padding: 1.75rem; background: linear-gradient(135deg, #f3e8ff, #ede9fe); border-radius: var(--radius-lg); border-left: 4px solid #a855f7;">
+    <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">About About This Business</p>
+    <p style="margin: 0; font-size: 1.05rem; line-height: 1.6; color: var(--color-text); font-weight: 500;">{{ business.summary }}</p>
+  </div>
+  {% endif %}
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2.5rem; margin-bottom: 3rem; padding-bottom: 2.5rem; border-bottom: 2px solid var(--color-border);">
+    <div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); padding: 1.75rem; border-radius: var(--radius-lg); border: 1px solid rgba(6, 182, 212, 0.2);">
+      <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Rating</p>
+      <p style="font-size: 2.25rem; font-weight: 700; margin: 0;">
+        <span class="star" style="font-size: 2rem;">⭐</span> {{ "%.1f"|format(business.average_rating or 0) }}
+      </p>
+    </div>
+    <div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); padding: 1.75rem; border-radius: var(--radius-lg); border: 1px solid rgba(6, 182, 212, 0.2);">
+      <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">⭐ Reviews</p>
+      <p style="font-size: 2.25rem; font-weight: 700; margin: 0;">{{ business.total_reviews or 0 }}</p>
+    </div>
+    {% if business.price_range %}
+    <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); padding: 1.75rem; border-radius: var(--radius-lg); border: 1px solid rgba(252, 211, 77, 0.4);">
+      <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Price Range</p>
+      <p style="font-size: 1.75rem; font-weight: 700; margin: 0; letter-spacing: 3px;">{{ business.price_range }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if business.address %}
+  <div style="margin-bottom: 2rem; padding: 1.75rem; background: #f8fafc; border-radius: var(--radius-lg); border-left: 4px solid var(--color-primary);">
+    <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;"> Location</p>
+    <p style="margin: 0; font-size: 1.05rem; line-height: 1.6; color: var(--color-text);">{{ business.address }}</p>
+  </div>
+  {% endif %}
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    {% if business.phone %}
+    <div style="padding: 1.5rem; background: #f0f9ff; border-radius: var(--radius-lg); border: 1px solid rgba(6, 182, 212, 0.2);">
+      <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 0.75rem; font-weight: 600;"> Phone</p>
+      <a href="tel:{{ business.phone }}" style="font-size: 1.05rem; color: var(--color-primary); text-decoration: none; font-weight: 500; word-break: break-word;">{{ business.phone }}</a>
+    </div>
+    {% endif %}
+    
+    {% if business.website %}
+    <div style="padding: 1.5rem; background: #f0f9ff; border-radius: var(--radius-lg); border: 1px solid rgba(6, 182, 212, 0.2);">
+      <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 0.75rem; font-weight: 600;"> Website</p>
+      <a href="{{ business.website }}" target="_blank" rel="noopener noreferrer" style="font-size: 1.05rem; color: var(--color-primary); text-decoration: none; font-weight: 500; word-break: break-word;">Visit Website</a>
+    </div>
+    {% endif %}
+
+    {% if business.yelp_url %}
+    <div style="padding: 1.5rem; background: #f0f9ff; border-radius: var(--radius-lg); border: 1px solid rgba(6, 182, 212, 0.2);">
+      <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 0.75rem; font-weight: 600;">★ Yelp</p>
+      <a href="{{ business.yelp_url }}" target="_blank" rel="noopener noreferrer" style="font-size: 1.05rem; color: var(--color-primary); text-decoration: none; font-weight: 500;">View on Yelp</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if business.hours %}
+  <div style="margin-bottom: 2rem; padding: 1.75rem; background: #fef3c7; border-radius: var(--radius-lg); border-left: 4px solid #f59e0b;">
+    <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;"> Hours</p>
+    <p style="margin: 0; font-size: 1.05rem; line-height: 1.8; color: var(--color-text); white-space: pre-wrap;">{{ business.hours }}</p>
+  </div>
+  {% endif %}
+
+  {% if business.attributes %}
+  <div style="margin-bottom: 2rem; padding: 1.75rem; background: #ecfdf5; border-radius: var(--radius-lg); border-left: 4px solid #10b981;">
+    <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">About Features & Amenities</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+      {% set attrs = business.attributes | string | from_json if business.attributes else {} %}
+      {% for key, value in attrs.items() %}
+        {% if value == true or value == "True" %}
+        <span style="background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.9rem; font-weight: 500; white-space: nowrap;">
+          {% if 'vegan' in key.lower() %}🌱 Vegan Options
+          {% elif 'kids' in key.lower() %}👶 Family-Friendly
+          {% elif 'outdoor' in key.lower() %}🏞️ Outdoor Seating
+          {% elif 'wifi' in key.lower() %}📶 WiFi
+          {% elif 'parking' in key.lower() %}🅿️ Parking
+          {% elif 'wheelchair' in key.lower() %} Wheelchair Accessible
+          {% elif 'dogs' in key.lower() %}🐕 Dogs Allowed
+          {% elif 'groups' in key.lower() %}👥 Large Groups
+          {% else %}✓ {{ key.replace('_', ' ') | title }}
+          {% endif %}
+        </span>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if business.description %}
+  <div style="margin-bottom: 2rem;">
+    <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">About</p>
+    <p style="margin: 0; line-height: 1.8; font-size: 1.05rem; color: var(--color-text); background: #f8fafc; padding: 1.5rem; border-radius: var(--radius-lg);">{{ business.description }}</p>
+  </div>
+  {% endif %}
+
+  {% if deals %}
+  <div style="margin-top: 3rem; padding-top: 2.5rem; border-top: 2px solid var(--color-border);">
+    <h2 style="font-size: 1.5rem; font-weight: 700; margin: 0 0 2rem; display: flex; align-items: center; gap: 0.75rem;"> Available Deals</h2>
+    <div class="grid" style="grid-template-columns: 1fr; gap: 1.25rem;">
+      {% for d in deals %}
+      <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #fcd34d; border-radius: var(--radius-lg); padding: 1.75rem; transition: all var(--transition-base); cursor: pointer; box-shadow: var(--shadow-md);">
+        <p style="margin: 0; color: #92400e; font-size: 1.05rem; font-weight: 500; line-height: 1.6;">{{ d.description or 'Special offer available' }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top: 3rem; box-shadow: var(--shadow-lg);">
+  <h2 style="font-size: 1.75rem; font-weight: 700; margin: 0 0 2.5rem; display: flex; align-items: center; gap: 0.75rem;"> Reviews & Feedback</h2>
+  
+  {% if reviews %}
+  <div style="margin-bottom: 3rem; border-bottom: 2px solid var(--color-border); padding-bottom: 2.5rem;">
+    {% for r in reviews %}
+    <div style="padding: 2rem; background: #f8fafc; border-radius: var(--radius-lg); margin-bottom: 1.5rem; border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap;">
+        <div>
+          <strong style="font-size: 1.1rem; color: var(--color-text);">{{ r.username or r.email or 'Anonymous' }}</strong>
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem;">
+            <span class="rating" style="font-size: 1.1em;">
+              {% if r.rating %}
+                {% for i in range(1, r.rating + 1) %}★{% endfor %}{% for i in range(r.rating + 1, 6) %}☆{% endfor %}
+                <span style="margin-left: 0.5rem; font-weight: 600; color: #fbbf24;">({{ r.rating }}/5)</span>
+              {% else %}
+                No rating
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        <span style="color: var(--color-text-muted); font-size: 0.9rem; font-weight: 500;">{{ r.created_date or '' }}</span>
+      </div>
+      <p style="margin: 0; color: var(--color-text); line-height: 1.8; font-size: 1rem;">{{ r.review_text or '' }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color: var(--color-text-muted); text-align: center; padding: 3rem 2rem; font-size: 1.05rem; background: #f8fafc; border-radius: var(--radius-lg);">No reviews yet. Be the first to share your experience!</p>
+  {% endif %}
+
+  <div style="padding: 2.5rem; background: linear-gradient(135deg, var(--color-bg-alt), var(--color-primary-light)); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+    <h3 style="margin: 0 0 2rem; font-size: 1.35rem; font-weight: 700; color: var(--color-text);"> Share Your Review</h3>
+    <form method="post" action="{{ url_for('business_review', business_id=business.id) }}">
+      <div class="form-group">
+        <label class="label" style="margin-bottom: 1rem; font-weight: 600;">Your Rating</label>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <div style="display: flex; gap: 0.3rem; font-size: 2rem;">
+            <span onclick="setRating(1)" style="cursor: pointer; user-select: none; transition: all 0.2s;" class="rating-star" data-rating="1">☆</span>
+            <span onclick="setRating(2)" style="cursor: pointer; user-select: none; transition: all 0.2s;" class="rating-star" data-rating="2">☆</span>
+            <span onclick="setRating(3)" style="cursor: pointer; user-select: none; transition: all 0.2s;" class="rating-star" data-rating="3">☆</span>
+            <span onclick="setRating(4)" style="cursor: pointer; user-select: none; transition: all 0.2s;" class="rating-star" data-rating="4">☆</span>
+            <span onclick="setRating(5)" style="cursor: pointer; user-select: none; transition: all 0.2s;" class="rating-star" data-rating="5">☆</span>
+          </div>
+          <span id="rating-text" style="font-size: 1rem; color: var(--color-text-secondary); font-weight: 500; min-width: 100px;">Average</span>
+        </div>
+        <input type="hidden" name="rating" id="rating-input" value="3">
+      </div>
+
+      <div class="form-group" style="margin: 1.5rem 0;">
+        <label class="label" style="margin-bottom: 1rem; font-weight: 600;">Your Review</label>
+        <textarea name="review_text" placeholder="Tell us about your experience..." required style="font-size: 1rem; padding: 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); min-height: 120px; width: 100%; font-family: inherit;"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1rem;">Post Your Review</button>
+    </form>
+
+    <script>
+      const ratingTexts = {1: 'Terrible', 2: 'Poor', 3: 'Average', 4: 'Good', 5: 'Excellent'};
+      
+      function setRating(value) {
+        document.getElementById('rating-input').value = value;
+        document.getElementById('rating-text').textContent = ratingTexts[value];
+        
+        // Update star display
+        document.querySelectorAll('.rating-star').forEach(star => {
+          const starValue = parseInt(star.dataset.rating);
+          if (starValue <= value) {
+            star.textContent = '★';
+            star.style.color = '#fbbf24';
+          } else {
+            star.textContent = '☆';
+            star.style.color = '#d1d5db';
+          }
+        });
+      }
+      
+      // Initialize with default rating (3)
+      setRating(3);
+      
+      // Add hover effect
+      document.querySelectorAll('.rating-star').forEach(star => {
+        star.addEventListener('mouseover', function() {
+          const hoverValue = parseInt(this.dataset.rating);
+          document.querySelectorAll('.rating-star').forEach(s => {
+            const starValue = parseInt(s.dataset.rating);
+            if (starValue <= hoverValue) {
+              s.style.color = '#fbbf24';
+              s.style.transform = 'scale(1.1)';
+            } else {
+              s.style.color = '#d1d5db';
+              s.style.transform = 'scale(1)';
+            }
+          });
+        });
+        
+        star.addEventListener('mouseout', function() {
+          const currentValue = parseInt(document.getElementById('rating-input').value);
+          document.querySelectorAll('.rating-star').forEach(s => {
+            const starValue = parseInt(s.dataset.rating);
+            if (starValue <= currentValue) {
+              s.style.color = '#fbbf24';
+              s.style.transform = 'scale(1)';
+            } else {
+              s.style.color = '#d1d5db';
+              s.style.transform = 'scale(1)';
+            }
+          });
+        });
+      });
+    </script>
+  </div>
+</div>
+
+{% endblock %}

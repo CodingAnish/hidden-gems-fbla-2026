@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+
+<section class="hero" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); position: relative; overflow: hidden;">
+  <div style="position: absolute; top: -20%; right: -10%; opacity: 0.1; font-size: 280px;">⚙️</div>
+  <div style="position: relative; z-index: 1;">
+    <h1 class="page-title" style="color: white;">Account Settings</h1>
+    <p class="page-subtitle" style="color: rgba(255,255,255,0.95);">Manage your account and preferences</p>
+  </div>
+</section>
+
+<div style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
+  
+  <!-- Account Section -->
+  <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 2rem;">
+    <h2 style="margin: 0 0 1.5rem 0; color: #2c3e50; font-size: 1.3rem; padding-bottom: 1rem; border-bottom: 3px solid #10B981;">🔐 Account</h2>
+    
+    <div style="display: grid; gap: 1.5rem;">
+      
+      <!-- Username -->
+      <div>
+        <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 0.5rem;">Username</label>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <span style="flex: 1; padding: 0.9rem 1rem; background: #f9f9f9; border: 1px solid #ddd; border-radius: 6px; color: #666;">
+            {{ session.get('username', 'User') }}
+          </span>
+          <button onclick="toggleEditUsername()" style="padding: 0.9rem 1.5rem; background: white; border: 2px solid #10B981; color: #10B981; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.backgroundColor='#ecfdf5'" onmouseout="this.style.backgroundColor='white'">
+            Change
+          </button>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 0.5rem;">Email Address</label>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <span style="flex: 1; padding: 0.9rem 1rem; background: #f9f9f9; border: 1px solid #ddd; border-radius: 6px; color: #666;">
+            {{ session.get('email') }} <span style="color: #10B981; font-weight: 600;">✓ Verified</span>
+          </span>
+          <button onclick="toggleEditEmail()" style="padding: 0.9rem 1.5rem; background: white; border: 2px solid #10B981; color: #10B981; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.backgroundColor='#ecfdf5'" onmouseout="this.style.backgroundColor='white'">
+            Change
+          </button>
+        </div>
+      </div>
+
+      <!-- Change Password -->
+      <div>
+        <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 0.5rem;">Password</label>
+        <button onclick="openChangePasswordModal()" style="padding: 0.9rem 1.5rem; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          🔐 Change Password
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Preferences Section -->
+  <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 2rem;">
+    <h2 style="margin: 0 0 1.5rem 0; color: #2c3e50; font-size: 1.3rem; padding-bottom: 1rem; border-bottom: 3px solid #10B981;">📋 Preferences</h2>
+    
+    <form method="POST" action="{{ url_for('save_preferences') }}" style="display: grid; gap: 1.5rem;">
+      
+      <!-- Favorite Categories -->
+      <div>
+        <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 1rem;">Favorite Categories (for recommendations)</label>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+          {% set categories = ['Food', 'Retail', 'Services', 'Entertainment', 'Health and Wellness'] %}
+          {% for category in categories %}
+          <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #f9f9f9; border-radius: 6px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.backgroundColor='#ecfdf5'" onmouseout="this.style.backgroundColor='#f9f9f9'">
+            <input type="checkbox" name="favorite_categories" value="{{ category }}" {% if category in saved_favorites %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
+            <span>{{ category }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Default Sort Order -->
+      <div>
+        <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 1rem;">Default Sort Order</label>
+        <select name="default_sort" style="width: 100%; padding: 0.9rem 1rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+          <option value="name" {% if saved_sort == 'name' %}selected{% endif %}>Name (A–Z)</option>
+          <option value="rating_high" {% if saved_sort == 'rating_high' %}selected{% endif %}>Rating (High to Low)</option>
+          <option value="reviews" {% if saved_sort == 'reviews' %}selected{% endif %}>Most Reviewed</option>
+        </select>
+      </div>
+
+      <button type="submit" style="padding: 1rem 1.5rem; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; width: 100%;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">        Save Preferences      </button>
+    </form>
+  </div>
+
+  <!-- Notifications Section -->
+  <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 2rem;">
+    <h2 style="margin: 0 0 1.5rem 0; color: #2c3e50; font-size: 1.3rem; padding-bottom: 1rem; border-bottom: 3px solid #10B981;">🖔 Notifications</h2>
+    
+    <form method="POST" action="{{ url_for('save_notifications') }}" style="display: grid; gap: 1.5rem;">
+      
+      <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f9f9f9; border-radius: 6px; cursor: pointer;">
+        <input type="checkbox" name="deal_notifications" checked style="width: 20px; height: 20px; cursor: pointer;">
+        <div>
+          <div style="font-weight: 600; color: #2c3e50;">New deals in my favorite categories</div>
+          <div style="font-size: 0.9rem; color: #666;">Get notified when deals are added</div>
+        </div>
+      </label>
+
+      <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f9f9f9; border-radius: 6px; cursor: pointer;">
+        <input type="checkbox" name="recommendation_notifications" style="width: 20px; height: 20px; cursor: pointer;">
+        <div>
+          <div style="font-weight: 600; color: #2c3e50;">Weekly recommendation digest</div>
+          <div style="font-size: 0.9rem; color: #666;">Get recommendations based on your preferences</div>
+        </div>
+      </label>
+
+      <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f9f9f9; border-radius: 6px; cursor: pointer;">
+        <input type="checkbox" name="review_responses" style="width: 20px; height: 20px; cursor: pointer;">
+        <div>
+          <div style="font-weight: 600; color: #2c3e50;">Responses to my reviews</div>
+          <div style="font-size: 0.9rem; color: #666;">Helpful votes and replies</div>
+        </div>
+      </label>
+
+      <button type=\"submit\" style=\"padding: 1rem 1.5rem; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; width: 100%;\" onmouseover=\"this.style.transform='translateY(-2px)'\" onmouseout=\"this.style.transform='translateY(0)'\">
+        Save Notification Settings
+      </button>
+    </form>
+  </div>
+
+  <!-- Privacy Section -->
+  <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 2rem;">
+    <h2 style="margin: 0 0 1.5rem 0; color: #2c3e50; font-size: 1.3rem; padding-bottom: 1rem; border-bottom: 3px solid #10B981;">🔐 Privacy</h2>
+    
+    <form method="POST" action="{{ url_for('save_privacy') }}" style="display: grid; gap: 1.5rem;">
+      
+      <div>
+        <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 1rem;">Profile Visibility</label>
+        <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f9f9f9; border-radius: 6px; cursor: pointer; margin-bottom: 0.75rem;">
+          <input type="radio" name="profile_visibility" value="public" checked style="width: 18px; height: 18px; cursor: pointer;">
+          <div>
+            <div style="font-weight: 600; color: #2c3e50;">Public</div>
+            <div style="font-size: 0.9rem; color: #666;">Anyone can see my reviews</div>
+          </div>
+        </label>
+        <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f9f9f9; border-radius: 6px; cursor: pointer;">
+          <input type="radio" name="profile_visibility" value="private" style="width: 18px; height: 18px; cursor: pointer;">
+          <div>
+            <div style="font-weight: 600; color: #2c3e50;">Private</div>
+            <div style="font-size: 0.9rem; color: #666;">Only I can see my activity</div>
+          </div>
+        </label>
+      </div>
+
+      <button type="submit" style="padding: 1rem 1.5rem; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; width: 100%;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        Save Privacy Settings
+      </button>
+    </form>
+  </div>
+
+  <!-- Danger Zone -->
+  <div style="background: #ffebee; border: 2px solid #ef5350; border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+    <h2 style="margin: 0 0 1rem 0; color: #c62828; font-size: 1.3rem;">⚠️ Danger Zone</h2>
+    <p style="margin: 0 0 1.5rem 0; color: #d32f2f;">Once you delete your account, there is no going back. All your reviews, favorites, and data will be permanently deleted.</p>
+    
+    <button onclick="openDeleteAccountModal()" style="padding: 1rem 1.5rem; background: #d32f2f; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; width: 100%;" onmouseover="this.style.backgroundColor='#c62828'" onmouseout="this.style.backgroundColor='#d32f2f'">
+      🗑️ Delete My Account
+    </button>
+  </div>
+
+</div>
+
+<!-- Help Button -->
+<button class="help-btn" onclick="Help.toggle()" aria-label="Open help menu">❓ Help</button>
+
+<script>
+function toggleEditUsername() {
+  alert('Edit username feature coming soon!');
+}
+
+function toggleEditEmail() {
+  alert('Edit email feature coming soon!');
+}
+
+function openChangePasswordModal() {
+  // TODO: Show modal with Current Password, New Password, Confirm Password fields
+  alert('Change password feature coming soon!');
+}
+
+function openDeleteAccountModal() {
+  if (confirm('Are you absolutely sure you want to delete your account? This cannot be undone!\n\nAll your reviews, favorites, and data will be permanently deleted.')) {
+    if (prompt('Type your email to confirm:') === '{{ session.get("email") }}') {
+      // TODO: Implement delete account API call
+      alert('Account deleted!');
+      window.location.href = '{{ url_for("logout") }}';
+    } else {
+      alert('Email did not match. Account not deleted.');
+    }
+  }
+}
+</script>
+
+{% endblock %}

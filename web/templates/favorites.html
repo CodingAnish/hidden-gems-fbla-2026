@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Favorites{% endblock %}
+{% block content %}
+
+<section class="hero" style="background: linear-gradient(135deg, #fecdd3, rgba(244, 63, 94, 0.05)); border-bottom: 2px solid var(--color-danger);">
+  <h1 class="page-title">Favorites</h1>
+  <p class="page-subtitle">Businesses you love and want to remember</p>
+</section>
+
+{% if businesses %}
+<!-- Results counter -->
+<div style="padding: 0 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin-left: auto; margin-right: auto;">
+  <p style="color: #666; font-weight: 500;">Showing {% if businesses %}{{ (page-1)*12 + 1 }}-{{ (page-1)*12 + businesses|length }}{% else %}0{% endif %} of {{ total_businesses }} businesses (Page {{ page }} of {{ total_pages }})</p>
+</div>
+
+<div class="grid" style="margin-bottom: 3rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 1rem;">
+  {% for b in businesses %}
+  <div class="business-card">
+    <div class="business-card-image" style="height: 200px; font-size: 64px; background-size: cover; background-position: center; {% if b.photo_url %}background-image: url('{{ b.photo_url }}');{% else %}background: linear-gradient(135deg, #fecdd3 0%, #fda4af 100%);{% endif %} display: flex; align-items: center; justify-content: center;">
+      {% if not b.photo_url %}
+        {% if b.category == 'Food' %}
+        {% elif b.category == 'Retail' %}
+        {% elif b.category == 'Services' %}
+        {% elif b.category == 'Entertainment' %}
+        {% elif b.category == 'Health and Wellness' %}
+        {% else %}
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="business-card-content" style="padding: 1.5rem;">
+      <span class="business-category" style="margin-bottom: 1rem; display: inline-block; padding: 0.4rem 0.85rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; color: white;
+        {% if b.category == 'Food' %}background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        {% elif b.category == 'Retail' %}background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        {% elif b.category == 'Services' %}background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        {% elif b.category == 'Entertainment' %}background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        {% elif b.category == 'Health and Wellness' %}background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        {% else %}background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        {% endif %}">
+        {{ b.category or 'Other' }}
+      </span>
+      <h3 class="business-card-title" style="margin-bottom: 0.75rem; font-size: 1.15rem;">{{ b.name or 'Business' }}</h3>
+      <div class="business-rating" style="margin-bottom: 1rem;">
+        <span class="star">⭐</span>
+        <strong>{{ "%.1f"|format(b.average_rating or 0) }}</strong>
+        <span style="color: var(--color-text-muted); font-size: 0.9rem;">({{ b.total_reviews or 0 }} reviews)</span>
+      </div>
+      <p class="business-description" style="margin-bottom: 1.5rem;">{{ b.description or 'A great local business.' }}</p>
+      <div class="business-card-actions" style="gap: 0.75rem;">
+        <a href="{{ url_for('business_detail', business_id=b.id) }}" class="btn btn-primary btn-sm" style="flex: 1; text-align: center; padding: 0.85rem 1rem; font-size: 0.95rem;">
+          View Details
+        </a>
+        <form method="post" action="{{ url_for('favorite_remove', business_id=b.id) }}" style="display: inline;">
+          <button type="submit" class="btn btn-ghost btn-sm" title="Remove from favorites" style="padding: 0.85rem 0.9rem; font-size: 1.1rem;">♥</button>
+        </form>
+      </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pagination Controls -->
+<div style="display: flex; justify-content: center; align-items: center; gap: 1.5rem; flex-wrap: wrap; margin: 3rem 0; padding: 0 1rem; max-width: 1200px; margin-left: auto; margin-right: auto;">
+  {% if page > 1 %}
+  <a href="{{ url_for('favorites', page=page-1) }}" 
+     style="padding: 0.85rem 1.5rem; background: white; border: 2px solid #2563EB; color: #2563EB; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block;" 
+     onmouseover="this.style.backgroundColor='#2563EB'; this.style.color='white';" 
+     onmouseout="this.style.backgroundColor='white'; this.style.color='#2563EB';">
+    ← Previous
+  </a>
+  {% else %}
+  <button disabled 
+     style="padding: 0.85rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; color: #999; border-radius: 8px; font-weight: 600; cursor: not-allowed; opacity: 0.6;">
+    ← Previous
+  </button>
+  {% endif %}
+  
+  <span style="font-weight: 600; font-size: 1rem; color: #2c3e50;">
+    Page <span style="color: #2563EB;">{{ page }}</span> of <span style="color: #2563EB;">{{ total_pages }}</span>
+  </span>
+
+  <!-- Page Jump Input -->
+  <form method="get" action="{{ url_for('favorites') }}" style="display: flex; align-items: center; gap: 0.5rem;">
+    <input type="number" name="page" min="1" max="{{ total_pages }}" value="{{ page }}" style="width: 60px; padding: 0.6rem; border: 2px solid #2563EB; border-radius: 6px; text-align: center; font-weight: 600;" placeholder="Go to page">
+    <button type="submit" style="padding: 0.6rem 1rem; background: #2563EB; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.backgroundColor='#1e40af';" onmouseout="this.style.backgroundColor='#2563EB';">Go</button>
+  </form>
+  
+  {% if page < total_pages %}
+  <a href="{{ url_for('favorites', page=page+1) }}" 
+     style="padding: 0.85rem 1.5rem; background: #2563EB; color: white; border: 2px solid #2563EB; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block;" 
+     onmouseover="this.style.backgroundColor='#1e40af';" 
+     onmouseout="this.style.backgroundColor='#2563EB';">
+    Next →
+  </a>
+  {% else %}
+  <button disabled 
+     style="padding: 0.85rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; color: #999; border-radius: 8px; font-weight: 600; cursor: not-allowed; opacity: 0.6;">
+    Next →
+  </button>
+  {% endif %}
+</div>
+
+{% else %}
+<div class="empty-state" style="padding: 4rem 2rem; margin-top: 2rem;">
+  <div class="empty-state-icon" style="font-size: 96px; margin-bottom: 1.5rem;">♥</div>
+  <h2 class="empty-state-title" style="font-size: 2rem; margin-bottom: 1rem;">No favorites yet</h2>
+  <p class="empty-state-text" style="font-size: 1.05rem; margin-bottom: 2rem;">Save your favorite local businesses to access them here</p>
+  <a href="{{ url_for('directory') }}" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1rem;">Explore Directory</a>
+</div>
+{% endif %}
+
+{% endblock %}

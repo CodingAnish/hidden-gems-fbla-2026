@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}My Account{% endblock %}
+{% block content %}
+
+<!-- Profile Header -->
+<div class="profile-header">
+  <div class="profile-avatar">👤</div>
+  <div class="profile-info">
+    <h1>{{ session.get('username', 'User') }}</h1>
+    <p>{{ session.get('email') }}</p>
+  </div>
+</div>
+
+<!-- User Stats -->
+<div class="section">
+  <div class="section-header">
+    <h2 class="section-title">Your Activity</h2>
+  </div>
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+    <div class="stat-card">
+      <div class="stat-card-value"></div>
+      <p class="stat-card-value" style="margin-top: 0; font-size: 1.75rem; color: var(--color-text);">{{ fav_count }}</p>
+      <p class="stat-card-label">Favorites</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-value"></div>
+      <p class="stat-card-value" style="margin-top: 0; font-size: 1.75rem; color: var(--color-text);">{{ review_count }}</p>
+      <p class="stat-card-label">Reviews Posted</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-value">🔖</div>
+      <p class="stat-card-value" style="margin-top: 0; font-size: 1.75rem; color: var(--color-text);">0</p>
+      <p class="stat-card-label">Deals Found</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Quick Actions -->
+<div class="section">
+  <div class="section-header">
+    <h2 class="section-title">Quick Actions</h2>
+  </div>
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+    <a href="{{ url_for('favorites') }}" class="card" style="text-decoration: none; color: inherit; padding: 2rem; text-align: center; transition: all var(--transition-base);">
+      <div style="font-size: 2.5rem; margin-bottom: 1rem;"></div>
+      <h3 style="margin: 0 0 0.5rem; color: var(--color-text);">My Favorites</h3>
+      <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.9rem;">View saved businesses</p>
+    </a>
+    
+    <a href="{{ url_for('directory') }}" class="card" style="text-decoration: none; color: inherit; padding: 2rem; text-align: center; transition: all var(--transition-base);">
+      <div style="font-size: 2.5rem; margin-bottom: 1rem;"></div>
+      <h3 style="margin: 0 0 0.5rem; color: var(--color-text);">Browse</h3>
+      <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.9rem;">Discover new businesses</p>
+    </a>
+    
+    <a href="{{ url_for('trending') }}" class="card" style="text-decoration: none; color: inherit; padding: 2rem; text-align: center; transition: all var(--transition-base);">
+      <div style="font-size: 2.5rem; margin-bottom: 1rem;"></div>
+      <h3 style="margin: 0 0 0.5rem; color: var(--color-text);">Trending</h3>
+      <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.9rem;">What's popular now</p>
+    </a>
+
+    <a href="{{ url_for('deals') }}" class="card" style="text-decoration: none; color: inherit; padding: 2rem; text-align: center; transition: all var(--transition-base);">
+      <div style="font-size: 2.5rem; margin-bottom: 1rem;"></div>
+      <h3 style="margin: 0 0 0.5rem; color: var(--color-text);">Deals</h3>
+      <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.9rem;">Special offers</p>
+    </a>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Settings Section -->
+<div class="section">
+  <div class="section-header">
+    <h2 class="section-title">Account Settings</h2>
+  </div>
+  
+  <div class="settings-section">
+    <h3 class="settings-section-title">Preferences</h3>
+    <div class="settings-row">
+      <div>
+        <p style="margin: 0; font-weight: 600; color: var(--color-text);">Email Notifications</p>
+        <p style="margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--color-text-secondary);">Receive updates about new deals and featured businesses</p>
+      </div>
+      <label style="display: flex; align-items: center; cursor: pointer;">
+        <input type="checkbox" checked style="margin: 0; cursor: pointer; width: 20px; height: 20px;">
+      </label>
+    </div>
+    <div class="settings-row">
+      <div>
+        <p style="margin: 0; font-weight: 600; color: var(--color-text);">Show Profile</p>
+        <p style="margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--color-text-secondary);">Allow other users to see your reviews and favorites</p>
+      </div>
+      <label style="display: flex; align-items: center; cursor: pointer;">
+        <input type="checkbox" checked style="margin: 0; cursor: pointer; width: 20px; height: 20px;">
+      </label>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3 class="settings-section-title">Account Management</h3>
+    <div class="settings-row">
+      <div>
+        <p style="margin: 0; font-weight: 600; color: var(--color-text);">Change Password</p>
+        <p style="margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--color-text-secondary);">Update your password regularly</p>
+      </div>
+      <button class="btn btn-ghost btn-sm">Change</button>
+    </div>
+  </div>
+
+  <div class="settings-section" style="border: 1px solid var(--color-danger); background: #fef2f2;">
+    <h3 class="settings-section-title" style="border-bottom-color: #fca5a5;">Danger Zone</h3>
+    <div class="settings-row">
+      <div>
+        <p style="margin: 0; font-weight: 600; color: var(--color-danger);">Delete Account</p>
+        <p style="margin: 0.5rem 0 0; font-size: 0.9rem; color: var(--color-text-secondary);">Permanently delete your account and all data</p>
+      </div>
+      <button class="btn btn-danger btn-sm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 3rem; text-align: center;">
+  <a href="{{ url_for('logout') }}" class="btn btn-ghost">Sign Out</a>
+</div>
+
+{% endblock %}

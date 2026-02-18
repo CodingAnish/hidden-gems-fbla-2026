@@ -1,0 +1,174 @@
+<!-- Deals & Coupons Section Component -->
+<div id="deals-section" class="deals-section" role="region" aria-labelledby="deals-title">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+        <h3 id="deals-title" style="margin: 0;">🎟️ Featured Deals & Coupons</h3>
+        <span class="deal-badge" id="deals-count" style="margin: 0;">0 Active</span>
+    </div>
+    
+    <div id="deals-container" role="feed" aria-live="polite">
+        <!-- Deals will be dynamically loaded here -->
+        <div class="no-reviews" style="padding: 1rem;">
+            Loading available deals...
+        </div>
+    </div>
+</div>
+
+<!-- Template for individual deal cards -->
+<template id="deal-card-template">
+    <div class="deal-card" role="article">
+        <h4></h4>
+        <p class="deal-description"></p>
+        
+        <div class="deal-code">
+            <strong></strong>
+            <button class="btn-copy" onclick="copyToClipboard(this, this.previousElementSibling.textContent)" aria-label="Copy coupon code">
+                📋 Copy Code
+            </button>
+        </div>
+        
+        <p class="deal-expires"></p>
+        
+        <button 
+            class="btn-submit" 
+            style="width: 100%; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); margin-top: 1rem;"
+            onclick="handleDealClick(this)"
+            aria-label="Learn more about this deal"
+        >
+            👉 Visit Business
+        </button>
+    </div>
+</template>
+
+<!-- Deals Display Script -->
+<script>
+// Sample deals data (in production, this would come from the backend)
+const sampleDeals = [
+    {
+        id: 1,
+        business: "Bosna Restaurant",
+        description: "Get 20% off your entire meal",
+        code: "BOSNA20",
+        expires: "2024-02-28",
+        category: "Restaurant"
+    },
+    {
+        id: 2,
+        business: "Perly's Deli",
+        description: "Buy one sandwich, get 50% off second",
+        code: "PERLY50",
+        expires: "2024-03-15",
+        category: "Deli"
+    },
+    {
+        id: 3,
+        business: "Aziza",
+        description: "Free appetizer with dinner entrée",
+        code: "AZIZA25",
+        expires: "2024-02-25",
+        category: "Mediterranean"
+    },
+    {
+        id: 4,
+        business: "Edo's Squid",
+        description: "15% off sushi orders over $50",
+        code: "EDOSUSHI",
+        expires: "2024-03-10",
+        category: "Japanese"
+    },
+    {
+        id: 5,
+        business: "Tarry House",
+        description: "Free dessert with brunch order",
+        code: "TARRY2024",
+        expires: "2024-02-22",
+        category: "Cafe"
+    }
+];
+
+/**
+ * Load and display deals
+ */
+function loadDeals() {
+    const container = document.getElementById('deals-container');
+    const template = document.getElementById('deal-card-template');
+    
+    if (!container || !template) return;
+    
+    container.innerHTML = '';
+    
+    if (sampleDeals.length === 0) {
+        container.innerHTML = '<div class="no-reviews">No active deals at this time. Check back soon!</div>';
+        return;
+    }
+    
+    sampleDeals.forEach(deal => {
+        const clone = template.content.cloneNode(true);
+        const dealCard = clone.querySelector('.deal-card');
+        const title = clone.querySelector('h4');
+        const description = clone.querySelector('.deal-description');
+        const code = clone.querySelector('strong');
+        const expires = clone.querySelector('.deal-expires');
+        
+        title.textContent = `${deal.category}: ${deal.business}`;
+        description.textContent = deal.description;
+        code.textContent = deal.code;
+        
+        const expiresDate = new Date(deal.expires);
+        const today = new Date();
+        const daysLeft = Math.ceil((expiresDate - today) / (1000 * 60 * 60 * 24));
+        
+        if (daysLeft > 0) {
+            expires.textContent = `⏰ Expires in ${daysLeft} days (${deal.expires})`;
+            expires.style.color = daysLeft <= 7 ? '#dc3545' : '#666';
+        } else {
+            expires.textContent = '❌ Expired';
+            expires.style.color = '#999';
+            dealCard.style.opacity = '0.6';
+        }
+        
+        container.appendChild(clone);
+    });
+    
+    // Update deals count
+    const activeDeals = sampleDeals.filter(d => new Date(d.expires) > new Date()).length;
+    document.getElementById('deals-count').textContent = `${activeDeals} Active`;
+}
+
+/**
+ * Copy coupon code to clipboard
+ */
+function copyToClipboard(button, code) {
+    navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '✓ Copied!';
+        setTimeout(() => {
+            button.textContent = originalText;
+        }, 2000);
+    }).catch(() => {
+        alert('Failed to copy code. Please try again.');
+    });
+}
+
+/**
+ * Handle deal click (in production, navigate to business page)
+ */
+function handleDealClick(button) {
+    const dealCard = button.closest('.deal-card');
+    const businessName = dealCard.querySelector('h4').textContent.split(': ')[1];
+    
+    Notifications.show(`Redirecting to ${businessName}...`, 'info');
+    
+    // In production: navigate to business detail page
+    // window.location.href = `/business/${businessId}`;
+}
+
+// Load deals when DOM is ready
+document.addEventListener('DOMContentLoaded', loadDeals);
+
+// Listen for visibility changes to refresh deals
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        loadDeals();
+    }
+});
+</script>

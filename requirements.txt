@@ -1,0 +1,6 @@
+# Hidden Gems - FBLA 2026
+# Python 3.8+ required. SQLite and Tkinter are built-in.
+# Desktop: python main.py
+# Web (browser + mobile): pip install flask && python -m web.app
+flask>=2.3.0
+python-dotenv>=1.0.0

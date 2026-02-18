@@ -1,0 +1,80 @@
+<!-- Filters & Sorting Section Component -->
+<div class="filters-section" role="region" aria-labelledby="filters-title">
+    <h3 id="filters-title">🔍 Filter & Sort Businesses</h3>
+    
+    <form id="filters-form" onsubmit="Filters.apply(); return false;" novalidate>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            
+            <!-- Sort By -->
+            <div class="filter-group">
+                <label for="sort-by">Sort By</label>
+                <select id="sort-by" name="sort" aria-label="Sort businesses by" onchange="Filters.apply()">
+                    <option value="name">Name (A-Z)</option>
+                    <option value="rating">Highest Rating</option>
+                    <option value="reviews">Most Reviews</option>
+                </select>
+            </div>
+            
+            <!-- Minimum Rating -->
+            <div class="filter-group">
+                <label for="min-rating">Minimum Rating</label>
+                <select id="min-rating" name="minRating" aria-label="Filter by minimum rating" onchange="Filters.apply()">
+                    <option value="">All Ratings</option>
+                    <option value="1">1+ Stars ⭐</option>
+                    <option value="2">2+ Stars ⭐⭐</option>
+                    <option value="3">3+ Stars ⭐⭐⭐</option>
+                    <option value="4">4+ Stars ⭐⭐⭐⭐</option>
+                    <option value="5">5 Stars ⭐⭐⭐⭐⭐</option>
+                </select>
+            </div>
+            
+            <!-- Category Filter -->
+            <div class="filter-group">
+                <label for="filter-category">Category</label>
+                <select id="filter-category" name="category" aria-label="Filter by business category" onchange="Filters.apply()">
+                    <option value="">All Categories</option>
+                    <option value="Italian">Italian Cuisine</option>
+                    <option value="Chinese">Chinese Cuisine</option>
+                    <option value="Mexican">Mexican Cuisine</option>
+                    <option value="Japanese">Japanese Cuisine</option>
+                    <option value="Indian">Indian Cuisine</option>
+                    <option value="Thai">Thai Cuisine</option>
+                    <option value="Mediterranean">Mediterranean</option>
+                    <option value="Cafe">Café & Bakery</option>
+                    <option value="Dessert">Dessert & Ice Cream</option>
+                    <option value="Fast Food">Fast Food</option>
+                    <option value="American">American Cuisine</option>
+                    <option value="Steakhouse">Steakhouse</option>
+                    <option value="Seafood">Seafood</option>
+                    <option value="BBQ">Barbecue</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+            <button 
+                type="button" 
+                class="btn-submit" 
+                id="clear-filters-btn"
+                onclick="Filters.clear()"
+                aria-label="Clear all filters and reset to defaults"
+                style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); width: auto; flex: 1; min-width: 150px;"
+            >
+                ↺ Clear Filters
+            </button>
+            <button 
+                type="submit" 
+                class="btn-submit"
+                id="apply-filters-btn"
+                aria-label="Apply all selected filters"
+                style="width: auto; flex: 1; min-width: 150px;"
+            >
+                ✓ Apply Filters
+            </button>
+        </div>
+        
+        <!-- Filter Summary -->
+        <div id="filters-summary" role="status" aria-live="polite" aria-atomic="true" style="margin-top: 1rem; color: #666; font-size: 0.95rem; font-style: italic;"></div>
+    </form>
+</div>

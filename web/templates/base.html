@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#2563EB">
+  <meta name="description" content="Discover and support small local businesses in Richmond, VA. Hidden Gems — FBLA 2026.">
+  <title>{% block title %}Hidden Gems{% endblock %} — Richmond, VA</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='features.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+</head>
+<body>
+  <header class="header" role="banner" style="position: sticky; top: 0; z-index: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div class="header-container">
+      <a href="{{ url_for('help_page') }}" class="logo" aria-label="Hidden Gems home">
+        Hidden Gems
+      </a>
+      {% if user %}
+      <nav class="nav" id="mainNav" role="navigation" aria-label="Main" style="gap: 0.5rem;">
+        <a href="{{ url_for('directory') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'directory' or request.endpoint == 'business_detail' %}border-bottom: 3px solid #2563EB; background: rgba(37, 99, 235, 0.1);{% endif %} transition: all 0.3s;">Directory</a>
+        <a href="{{ url_for('trending') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'trending' %}border-bottom: 3px solid #e74c3c; background: rgba(231, 76, 60, 0.1);{% endif %} transition: all 0.3s;">Trending</a>
+        <a href="{{ url_for('recommendations') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'recommendations' %}border-bottom: 3px solid #9b59b6; background: rgba(155, 89, 182, 0.1);{% endif %} transition: all 0.3s;">For You</a>
+        <a href="{{ url_for('deals') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'deals' %}border-bottom: 3px solid #f39c12; background: rgba(243, 156, 18, 0.1);{% endif %} transition: all 0.3s;">Deals</a>
+        <a href="{{ url_for('favorites') }}" id="favs-link" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'favorites' %}border-bottom: 3px solid #2563EB; background: rgba(37, 99, 235, 0.1);{% endif %} transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;">
+          Favorites <span id="fav-count-badge" style="background: #2563EB; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; display: none;">0</span>
+        </a>
+        <a href="{{ url_for('help_page') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'help_page' %}border-bottom: 3px solid #27ae60; background: rgba(39, 174, 96, 0.1);{% endif %} transition: all 0.3s;">Help</a>
+        
+        <!-- User Menu Dropdown -->
+        <div style="position: relative; margin-left: auto; border-left: 1px solid var(--color-border); padding-left: 1.5rem;">
+          <button id="userMenuBtn" onclick="toggleUserMenu()" style="padding: 0.75rem 1rem; background: none; border: none; cursor: pointer; font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #2c3e50; transition: all 0.3s;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='#2c3e50'">
+            👤 {{ user.username }} <span id="menuArrow" style="font-size: 0.8rem;">▼</span>
+          </button>
+          <div id="userMenu" style="position: absolute; top: 100%; right: 0; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 200px; display: none; z-index: 1000; margin-top: 0.5rem;">
+            <a href="{{ url_for('profile') }}" style="display: block; padding: 1rem 1.5rem; color: #2c3e50; text-decoration: none; transition: all 0.3s; border-bottom: 1px solid #f0f0f0; font-weight: 600;" onmouseover="this.style.backgroundColor='#f9f9f9'" onmouseout="this.style.backgroundColor='transparent'">
+              👤 My Profile
+            </a>
+            <a href="{{ url_for('settings') }}" style="display: block; padding: 1rem 1.5rem; color: #2c3e50; text-decoration: none; transition: all 0.3s; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.backgroundColor='#f9f9f9'" onmouseout="this.style.backgroundColor='transparent'">
+              ⚙️ Settings
+            </a>
+            <a href="{{ url_for('favorites') }}" style="display: block; padding: 1rem 1.5rem; color: #2c3e50; text-decoration: none; transition: all 0.3s; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.backgroundColor='#f9f9f9'" onmouseout="this.style.backgroundColor='transparent'">
+              ❤️ Favorites
+            </a>
+            <a href="{{ url_for('logout') }}" style="display: block; padding: 1rem 1.5rem; color: #d32f2f; text-decoration: none; transition: all 0.3s; font-weight: 600;" onmouseover="this.style.backgroundColor='#ffebee'" onmouseout="this.style.backgroundColor='transparent'">
+              🚪 Logout
+            </a>
+          </div>
+        </div>
+        
+        <script>
+          let menuOpen = false;
+          function toggleUserMenu() {
+            const menu = document.getElementById('userMenu');
+            const arrow = document.getElementById('menuArrow');
+            menuOpen = !menuOpen;
+            if (menuOpen) {
+              menu.style.display = 'block';
+              arrow.style.transform = 'rotate(180deg)';
+            } else {
+              menu.style.display = 'none';
+              arrow.style.transform = 'rotate(0)';
+            }
+          }
+          
+          // Close menu when clicking outside
+          document.addEventListener('click', function(event) {
+            const userBtn = document.getElementById('userMenuBtn');
+            const userMenu = document.getElementById('userMenu');
+            if (userBtn && !userBtn.contains(event.target) && userMenu && !userMenu.contains(event.target)) {
+              menuOpen = false;
+              userMenu.style.display = 'none';
+              document.getElementById('menuArrow').style.transform = 'rotate(0)';
+            }
+          });
+        </script>
+      </nav>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav">☰</button>
+      {% else %}
+      <nav class="nav" role="navigation">
+        <a href="{{ url_for('login') }}" style="padding: 0.75rem 1rem; color: var(--color-text);">Log in</a>
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm" style="color: var(--color-text);">Sign up</a>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <script>
+    // Update favorites counter badge
+    function updateFavsBadge() {
+      const favs = Favorites?.all || [];
+      const badge = document.getElementById('fav-count-badge');
+      if (badge && favs.length > 0) {
+        badge.textContent = favs.length;
+        badge.style.display = 'flex';
+      } else if (badge) {
+        badge.style.display = 'none';
+      }
+    }
+    
+    // Initial update and listen for changes
+    document.addEventListener('DOMContentLoaded', updateFavsBadge);
+    window.addEventListener('storage', updateFavsBadge);
+  </script>
+  <main class="main" role="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash" style="margin-bottom: var(--spacing-3xl);">
+          {% for category, msg in messages %}
+            <div class="flash-{{ category }}" style="font-size: 1rem; padding: 1.25rem 1.5rem; border-radius: 10px;">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer" style="padding: var(--spacing-3xl) var(--spacing-xl); margin-top: auto;">
+    <div style="max-width: var(--content-max-width); margin: 0 auto; text-align: center;">
+      <p style="margin: 0; font-size: 0.95rem;">
+         <strong>Hidden Gems</strong> — Discover local businesses in Richmond, VA
+      </p>
+      <p style="margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--color-text-muted);">
+        Build a thriving local community. FBLA 2026.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('menuBtn')?.addEventListener('click', function() {
+      const nav = document.querySelector('.nav');
+      nav.classList.toggle('open');
+      this.setAttribute('aria-expanded', nav.classList.contains('open'));
+    });
+  </script>
+  
+  {% if user %}
+  <!-- AI Chatbot (only for logged-in users) -->
+  {% include 'chatbot.html' %}
+  
+  <!-- Feature Modals & Components -->
+  {% include 'components/review_modal.html' %}
+  {% include 'components/help_menu.html' %}
+  
+  <!-- Features JavaScript & Initialization -->
+  <script src="{{ url_for('static', filename='features.js') }}"></script>
+  {% endif %}
+  
+  {% block scripts %}{% endblock %}
+</body>
+</html>

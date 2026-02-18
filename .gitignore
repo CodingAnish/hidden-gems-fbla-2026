@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+*.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Cursor
+.cursor/
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+
+# Java build files
+*.class
+*.jar
+*.war
+target/
+.gradle/
+build/
+
+# Sensitive data - DO NOT COMMIT
+config.py
+
+# Temporary files
+*.tmp
+*.bak
+~$*
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Database files (usually shouldn't be committed)
+*.db
+*.sqlite
+*.sqlite3
+
+# Terminals folder
+terminals/
