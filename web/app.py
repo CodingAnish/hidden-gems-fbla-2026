@@ -121,6 +121,7 @@ def get_paginated_items(items, page=1, items_per_page=12):
 # ============================================
 
 
+@app.route("/")
 def index():
     if current_user():
         businesses = queries.get_all_businesses()
