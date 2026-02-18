@@ -82,10 +82,10 @@ def init_db():
     if "user_preferences" not in existing_columns:
         cursor.execute("ALTER TABLE users ADD COLUMN user_preferences TEXT")
         connection.commit()
-    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL")
+    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL")
 
     # Email verification codes (sent to user / shown in demo)
-    cur.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS email_verification_codes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -96,7 +96,7 @@ def init_db():
     """)
 
     # Verification attempts - visible table for verification records
-    cur.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS verification_attempts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT,
@@ -111,7 +111,7 @@ def init_db():
     """)
 
     # Businesses - Enhanced with Yelp data and AI summary
-    cur.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS businesses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -133,13 +133,13 @@ def init_db():
             yelp_id TEXT UNIQUE
         )
     """)
-    cur.execute("PRAGMA table_info(businesses)")
-    bcols = [row[1] for row in cur.fetchall()]
+    cursor.execute("PRAGMA table_info(businesses)")
+    bcols = [row[1] for row in cursor.fetchall()]
     
     # Add missing columns if they don't exist
     if "address" not in bcols:
-        cur.execute("ALTER TABLE businesses ADD COLUMN address TEXT")
-        conn.commit()
+        cursor.execute("ALTER TABLE businesses ADD COLUMN address TEXT")
+        connection.commit()
     
     new_cols = {
         "phone": "TEXT",
@@ -156,11 +156,11 @@ def init_db():
     }
     for col_name, col_type in new_cols.items():
         if col_name not in bcols:
-            cur.execute(f"ALTER TABLE businesses ADD COLUMN {col_name} {col_type}")
-            conn.commit()
+            cursor.execute(f"ALTER TABLE businesses ADD COLUMN {col_name} {col_type}")
+            connection.commit()
 
     # Deals
-    cur.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS deals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             business_id INTEGER NOT NULL,
@@ -170,7 +170,7 @@ def init_db():
     """)
 
     # Reviews - linked to user and business
-    cur.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             business_id INTEGER NOT NULL,
@@ -185,7 +185,7 @@ def init_db():
     """)
 
     # Favorites - user bookmarks
-    cur.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS favorites (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -196,5 +196,5 @@ def init_db():
         )
     """)
 
-    conn.commit()
-    conn.close()
+    connection.commit()
+    connection.close()
