@@ -1,8 +1,6 @@
-# Hidden Gems — Architecture & Design
+# Hidden Gems Architecture and Design
 
-**FBLA 2026 | Byte-Sized Business Boost**
-
-This document describes the modular, cross-platform architecture and design system used to deliver a production-ready desktop and web/mobile experience from a single codebase.
+This document outlines the app structure, design system, and how the web UI and shared logic work together.
 
 ---
 
@@ -10,7 +8,7 @@ This document describes the modular, cross-platform architecture and design syst
 
 **Location:** `src/ui/design_system.py`
 
-A centralized design system ensures consistent typography, color palettes, spacing, and layout tokens across:
+A centralized design system keeps typography, colors, spacing, and layout consistent across:
 
 - **Desktop (Tkinter/ttk)** — Applied via `src/ui/theme.py`, which configures ttk styles from these tokens.
 - **Web** — Mirrored in `web/static/style.css` using CSS custom properties (variables) so the same palette and spacing drive the responsive UI.
@@ -23,7 +21,7 @@ A centralized design system ensures consistent typography, color palettes, spaci
 - **RADII** — Border radius for cards and buttons.
 - **LAYOUT** — Content max width, min window size, row heights, input/button padding.
 
-**Usage:** Import from `src.ui.design_system` in desktop code; keep `web/static/style.css` variables in sync for web.
+**Usage:** Import from `src.ui.design_system` in desktop code; keep `web/static/style.css` variables in sync for the web UI.
 
 ---
 
@@ -65,7 +63,7 @@ The web app uses Flask sessions for user state; business logic (auth, queries) i
 
 ---
 
-## 5. Web & Mobile (Flask + Responsive CSS)
+## 5. Web and Mobile (Flask + Responsive CSS)
 
 - **Entry point:** `python -m web.app` (from project root). Serves the same SQLite database as the desktop app.
 - **Backend:** `web/app.py` — Flask routes for login, register, directory, business detail, favorites, deals, trending, recommendations, help; session-based auth; parameterized queries via `src.database.queries`.
@@ -76,7 +74,7 @@ The web app uses Flask sessions for user state; business logic (auth, queries) i
 
 ---
 
-## 6. Data Layer & Security
+## 6. Data Layer and Security
 
 - **Database:** SQLite via `src/database/db.py` (connection, schema, migrations). Path is project-root-relative so it works for both desktop and web when run from root.
 - **Secure integration:** All SQL in `src/database/queries.py` uses **parameterized statements** only (e.g. `?` placeholders); no string concatenation of user input. This prevents SQL injection and aligns with secure database integration practices.
@@ -96,11 +94,11 @@ The same codebase serves desktop and web; only the UI layer differs (Tkinter vs 
 
 ---
 
-## 8. Maintainability & Extensibility
+## 8. Maintainability and Extensibility
 
 - **Design changes** — Update `design_system.py` and theme; then sync CSS variables in `web/static/style.css` if needed.
 - **New screens** — Add a window in `src/ui/` (or a new module) using components and layout helpers; add a route and template in `web/app.py` and `web/templates/` for web.
 - **New features** — Add queries in `queries.py`, call from both desktop and web code paths.
 - **State** — Extend `app_state.py` for new global UI or user preferences without scattering state across windows.
 
-This structure supports scalability, consistent UX across platforms, and clear separation of concerns for long-term maintenance.
+This structure keeps responsibilities clear and makes the app easier to extend over time.

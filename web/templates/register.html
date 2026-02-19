@@ -1,88 +1,159 @@
 {% extends "base.html" %}
+<!-- PAGE TITLE - Set to "Register" in browser tab, combined with " — Richmond, VA" from base.html -->
 {% block title %}Register{% endblock %}
+<!-- PAGE CONTENT - Registration form and layout -->
 {% block content %}
 
+<!-- PAGE CONTAINER - Centered signup card using flexbox -->
 <div style="display: flex; align-items: center; justify-content: center; min-height: 70vh; padding: 2rem;">
+  <!-- REGISTRATION CARD - White card with rounded corners, shadow, and padding -->
   <div style="background: var(--color-surface); border-radius: var(--radius-xl); padding: 3rem; box-shadow: var(--shadow-xl); max-width: 450px; width: 100%;">
+    <!-- HEADER SECTION - Welcome message and tagline for new users -->
     <div style="text-align: center; margin-bottom: 2.5rem;">
+      <!-- Main heading - "Join the Community" -->
       <h1 style="font-size: 2.25rem; font-weight: 700; margin: 0 0 0.75rem 0; color: var(--color-text);">Join the Community</h1>
+      <!-- Tagline - Highlights benefits of creating account -->
       <p style="font-size: 1.05rem; color: var(--color-text-muted); margin: 0;">Create an account to save favorites and share reviews</p>
     </div>
 
+    <!-- REGISTRATION FORM - POST request to register endpoint -->
     <form method="post" action="{{ url_for('register') }}" style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- USERNAME INPUT FIELD -->
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Label for username field -->
         <label for="username" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Username</label>
+        <!-- Username input (3-30 characters) with focus/blur state styling -->
+        <!-- minlength and maxlength enforced for username validation -->
         <input type="text" id="username" name="username" required minlength="3" maxlength="30" autocomplete="username" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)';" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';">
       </div>
 
+      <!-- EMAIL INPUT FIELD -->
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Label for email field -->
         <label for="email" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Email</label>
+        <!-- Email input with browser validation for email format -->
         <input type="email" id="email" name="email" required autocomplete="email" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)';" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';">
       </div>
 
+      <!-- PASSWORD INPUT FIELD WITH REAL-TIME VALIDATION -->
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Label for password field -->
         <label for="password" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Password</label>
+        <!-- Password input with real-time validation function -->
+        <!-- On focus: displays requirements list, on input: validates requirements -->
+        <!-- autocomplete="new-password" tells browser this is a new password field -->
         <input type="password" id="password" name="password" required autocomplete="new-password" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)'; checkPassword();" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';" oninput="checkPassword()">
+        
+        <!-- PASSWORD REQUIREMENTS LIST - Hidden until user starts typing password -->
         <ul id="password-requirements" style="list-style: none; padding: 0; margin-top: 0.5rem; font-size: 0.9rem; display: none;">
+          <!-- At least 8 characters requirement (red ✗ by default, turns green ✓ when met) -->
           <li id="req-length" style="color: #d9534f; margin-bottom: 0.25rem;">✗ At least 8 characters</li>
+          <!-- Uppercase letter requirement -->
           <li id="req-upper" style="color: #d9534f; margin-bottom: 0.25rem;">✗ One uppercase letter (A-Z)</li>
+          <!-- Numeric digit requirement -->
           <li id="req-number" style="color: #d9534f; margin-bottom: 0.25rem;">✗ One number (0-9)</li>
+          <!-- Special character requirement -->
           <li id="req-symbol" style="color: #d9534f;">✗ One symbol (!@#$%^&* etc)</li>
         </ul>
       </div>
 
+      <!-- CONFIRM PASSWORD INPUT FIELD -->
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Label for confirm password field -->
         <label for="confirm" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Confirm password</label>
+        <!-- Confirm password input (must match password field) -->
         <input type="password" id="confirm" name="confirm" required autocomplete="new-password" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)';" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';">
       </div>
 
+      <!-- JAVASCRIPT: PASSWORD VALIDATION FUNCTIONS -->
       <script>
+        /**
+         * FUNCTION: checkPassword
+         * PURPOSE: Validate password in real-time as user types
+         * TRIGGERS: On focus and on input to password field
+         * BEHAVIOR: 
+         *   - Shows requirements list when user starts typing
+         *   - Tests each requirement with regex patterns
+         *   - Updates visual indicators (✗ or ✓) for each requirement
+         *   - Color-codes requirements (red=unmet, green=met)
+         */
         function checkPassword() {
+          // Get password input value
           const password = document.getElementById('password').value;
+          // Get requirements list container
           const requirements = document.getElementById('password-requirements');
           
-          // Only show requirements if user has started typing
+          // ONLY SHOW REQUIREMENTS IF USER HAS STARTED TYPING
+          // Hides requirements when field is empty to reduce clutter
           if (password.length > 0) {
             requirements.style.display = 'block';
           } else {
             requirements.style.display = 'none';
-            return;
+            return;  // Exit function early if password empty
           }
           
+          // TEST EACH PASSWORD REQUIREMENT
+          // Check minimum length (8 or more characters)
           const hasLength = password.length >= 8;
+          // Check for at least one uppercase letter (A-Z)
           const hasUpper = /[A-Z]/.test(password);
+          // Check for at least one numeric digit (0-9)
           const hasNumber = /[0-9]/.test(password);
+          // Check for at least one special character (!@#$%^&*()_+=-[]{};':"\\,.<>?/)
           const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':\"\\,.<>?/]/.test(password);
           
+          // UPDATE VISUAL INDICATORS FOR EACH REQUIREMENT
           updateRequirement('req-length', hasLength);
           updateRequirement('req-upper', hasUpper);
           updateRequirement('req-number', hasNumber);
           updateRequirement('req-symbol', hasSymbol);
         }
         
+        /**
+         * FUNCTION: updateRequirement
+         * PURPOSE: Update visual indicator for a single password requirement
+         * PARAMETERS: 
+         *   - id (string): HTML element ID to update
+         *   - met (boolean): Whether requirement is satisfied
+         * BEHAVIOR: Changes color and symbol (✗ to ✓ or vice versa)
+         *   - Green (#5cb85c) ✓ when requirement is met
+         *   - Red (#d9534f) ✗ when requirement is not met
+         */
         function updateRequirement(id, met) {
+          // Get reference to requirement element
           const element = document.getElementById(id);
+          
           if (met) {
+            // REQUIREMENT MET: Color green and show checkmark
             element.style.color = '#5cb85c';
             element.textContent = element.textContent.replace('✗', '✓');
           } else {
+            // REQUIREMENT NOT MET: Color red and show X mark
             element.style.color = '#d9534f';
             element.textContent = element.textContent.replace('✓', '✗');
           }
         }
       </script>
 
+      <!-- SUBMIT BUTTON - Create Account button that submits form -->
       <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: 600; margin-top: 0.5rem;">Create Account</button>
     </form>
 
+    <!-- DIVIDER - Visual separator between signup and login sections -->
+    <!-- Uses horizontal lines with centered text "Already registered?" -->
     <div style="display: flex; align-items: center; margin: 2rem 0; gap: 1rem;">
+      <!-- Left horizontal line -->
       <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
+      <!-- Center text -->
       <span style="font-size: 0.95rem; color: var(--color-text-muted);">Already registered?</span>
+      <!-- Right horizontal line -->
       <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
     </div>
 
+    <!-- LOGIN PROMPT SECTION - For existing users who accidentally visited signup page -->
     <p style="text-align: center; font-size: 1rem; margin: 0; color: var(--color-text-muted);">
       Already have an account? 
+      <!-- Link to login page - redirects existing users to sign in -->
       <a href="{{ url_for('login') }}" style="color: var(--color-text); text-decoration: none; font-weight: 600; transition: color var(--transition-base);" onmouseover="this.style.color='#555';" onmouseout="this.style.color='var(--color-text)';">Log in</a>
     </p>
   </div>

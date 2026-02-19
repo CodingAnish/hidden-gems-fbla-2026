@@ -6,97 +6,211 @@ import sqlite3
 import json
 from .db import get_connection
 
-# ---- Users ----
-def user_by_email(email):
-    """Get user row by email or None (includes email_verified, username)."""
+# ===== USER MANAGEMENT ===== 
+# All functions for retrieving and managing user account data
+
+def user_by_email(email_address):
+    """
+    Retrieve user account by email address.
+    
+    Email is normalized (stripped, lowercased) for consistent lookups.
+    
+    Args:
+        email_address (str): Email to search for
+    
+    Returns:
+        dict: User record with keys (id, email, password_hash, email_verified, username)
+        None: If no user found with this email
+    """
     conn = get_connection()
     cur = conn.cursor()
+    # Normalize email: trim whitespace and convert to lowercase
+    normalized_email = email_address.strip().lower()
     cur.execute(
         "SELECT id, email, password_hash, email_verified, username FROM users WHERE email = ?",
-        (email.strip().lower(),)
+        (normalized_email,)
     )
     row = cur.fetchone()
     conn.close()
+    # Convert SQLite Row object to dictionary for easier access
     return dict(row) if row else None
 
 
-def user_by_username(username):
-    """Get user row by username or None."""
-    if not username or not str(username).strip():
+def user_by_username(username_input):
+    """
+    Retrieve user account by username.
+    
+    Username is normalized (stripped, lowercased) for consistent lookups.
+    Case-insensitive search for better user experience.
+    
+    Args:
+        username_input (str): Username to search for
+    
+    Returns:
+        dict: User record with keys (id, email, password_hash, email_verified, username)
+        None: If username is empty or no user found
+    """
+    # Validate input is provided
+    if not username_input or not str(username_input).strip():
         return None
+    
     conn = get_connection()
     cur = conn.cursor()
+    # Normalize username: trim whitespace and convert to lowercase
+    normalized_username = username_input.strip().lower()
     cur.execute(
         "SELECT id, email, password_hash, email_verified, username FROM users WHERE username = ?",
-        (username.strip().lower(),)
+        (normalized_username,)
     )
     row = cur.fetchone()
     conn.close()
+    # Convert SQLite Row object to dictionary
     return dict(row) if row else None
 
 
-def user_by_email_or_username(identifier):
-    """Get user by email or username. identifier is trimmed and lowercased for lookup."""
-    if not identifier or not str(identifier).strip():
+def user_by_email_or_username(user_identifier):
+    """
+    Retrieve user by either email address or username (flexible lookup).
+    
+    This is useful for login forms where users might enter either their email or username.
+    Normalized for case-insensitive matching.
+    
+    Args:
+        user_identifier (str): Email address or username to search for
+    
+    Returns:
+        dict: User record with keys (id, email, password_hash, email_verified, username)
+        None: If identifier is empty or no user found
+    """
+    # Validate input is provided
+    if not user_identifier or not str(user_identifier).strip():
         return None
-    key = identifier.strip().lower()
+    
+    # Normalize identifier: trim and lowercase for case-insensitive matching
+    normalized_key = user_identifier.strip().lower()
+    
     conn = get_connection()
     cur = conn.cursor()
+    # Query uses OR condition: match by email OR username (both case-insensitive)
     cur.execute(
         "SELECT id, email, password_hash, email_verified, username FROM users WHERE lower(email) = ? OR lower(username) = ?",
-        (key, key)
+        (normalized_key, normalized_key)
     )
     row = cur.fetchone()
     conn.close()
+    # Convert SQLite Row object to dictionary
     return dict(row) if row else None
 
 
-def get_user_by_id(user_id):
-    """Get user row by ID or None."""
+def get_user_by_id(user_id_value):
+    """
+    Retrieve user account by user ID.
+    
+    This is the fastest lookup method (queries by primary key).
+    Returns complete user record for authenticated session management.
+    
+    Args:
+        user_id_value (int): User ID from users table primary key
+    
+    Returns:
+        dict: User record with keys (id, email, password_hash, email_verified, username)
+        None: If no user found with this ID
+    """
     conn = get_connection()
     cur = conn.cursor()
+    # Query by primary key (fastest database lookup)
     cur.execute(
         "SELECT id, email, password_hash, email_verified, username FROM users WHERE id = ?",
-        (user_id,)
+        (user_id_value,)
     )
     row = cur.fetchone()
     conn.close()
+    # Convert SQLite Row object to dictionary
     return dict(row) if row else None
 
 
-def create_user(username, email, password_hash):
-    """Insert a new user with email_verified=0. Returns new user id or None if email/username exists."""
+def create_user(username_new, email_new, password_hash_value):
+    """
+    Create a new user account after validation.
+    
+    New users start with email_verified=0 (must verify email before login).
+    Enforces unique constraints on username and email (returns None if duplicate).
+    
+    Args:
+        username_new (str): Normalized username (already lowercased by auth module)
+        email_new (str): Normalized email (already lowercased by auth module)
+        password_hash_value (str): SHA-256 hash of password (computed by auth module)
+    
+    Returns:
+        int: New user ID if creation successful
+        None: If username or email already exists (IntegrityError)
+    """
     conn = get_connection()
     cur = conn.cursor()
     try:
+        # Insert new user with email_verified=0 (unverified)
         cur.execute(
             "INSERT INTO users (username, email, password_hash, email_verified) VALUES (?, ?, ?, 0)",
-            (username.strip().lower(), email.strip().lower(), password_hash)
+            (username_new.strip().lower(), email_new.strip().lower(), password_hash_value)
         )
         conn.commit()
-        uid = cur.lastrowid
+        # Get the auto-generated user ID (primary key)
+        new_user_id = cur.lastrowid
         conn.close()
-        return uid
+        return new_user_id
     except sqlite3.IntegrityError:
+        # Unique constraint violated (email or username already exists)
         conn.rollback()
         conn.close()
-        return None
+        return None  # Signal creation failed due to duplicate
 
 
-def set_email_verified(user_id, verified=1):
-    """Mark user's email as verified."""
+def set_email_verified(user_id_to_mark, is_verified_flag=1):
+    """
+    Mark a user's email address as verified (or unverified).
+    
+    Called after user confirms verification code sent to their email.
+    Users cannot log in without email_verified=1.
+    
+    Args:
+        user_id_to_mark (int): User ID to update
+        is_verified_flag (int): 1 = verified, 0 = unverified (default: 1 for verified)
+    
+    Returns:
+        None (database is updated immediately)
+    """
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE users SET email_verified = ? WHERE id = ?", (verified, user_id))
+    # Update email_verified flag in users table
+    cur.execute(
+        "UPDATE users SET email_verified = ? WHERE id = ?",
+        (is_verified_flag, user_id_to_mark)
+    )
     conn.commit()
     conn.close()
 
 
-def update_user_username(user_id, new_username):
-    """Update user's username."""
+def update_user_username(user_id_to_update, new_username_value):
+    """
+    Update a user's username in their account.
+    
+    Called from settings page when user changes their username.
+    Username is normalized (lowercased) for consistency.
+    
+    Args:
+        user_id_to_update (int): User ID to update
+        new_username_value (str): New username (will be lowercased)
+    
+    Returns:
+        None (database is updated immediately)
+    """
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE users SET username = ? WHERE id = ?", (new_username.strip().lower(), user_id))
+    # Normalize username and update in database
+    cur.execute(
+        "UPDATE users SET username = ? WHERE id = ?",
+        (new_username_value.strip().lower(), user_id_to_update)
+    )
     conn.commit()
     conn.close()
 
@@ -236,78 +350,192 @@ def get_all_verification_attempts():
     return [dict(r) for r in rows]
 
 
-# ---- Businesses ----
+# ===== BUSINESS LOOKUP & SEARCH =====
+# All functions for retrieving, searching, and managing business data from directory
+
 def get_all_businesses():
+    """
+    Retrieve all businesses in the directory (sorted alphabetically).
+    
+    Returns complete business records including ratings, reviews, photos, hours, etc.
+    
+    Returns:
+        list: List of business dictionaries, each with complete business data
+        Returns [] if no businesses in database
+    """
     conn = get_connection()
     cur = conn.cursor()
+    # Query all businesses, sorted by name for consistent display
     cur.execute("SELECT * FROM businesses ORDER BY name")
     rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    # Convert SQLite Row objects to dictionaries
+    return [dict(business_row) for business_row in rows]
 
 
-def get_businesses_by_category(category):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM businesses WHERE category = ? ORDER BY name", (category,))
-    rows = cur.fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
-
-
-def get_businesses_for_directory(category=None, sort_by="name"):
+def get_businesses_by_category(category_name):
     """
-    Get businesses optionally filtered by category, sorted.
-    sort_by: 'name' | 'rating_high' | 'rating_low' | 'reviews' | 'reviews_low'
+    Retrieve all businesses in a specific category.
+    
+    Categories include: Food, Retail, Services, Entertainment, Health & Wellness
+    
+    Args:
+        category_name (str): Category to filter by
+    
+    Returns:
+        list: List of business dictionaries in that category, sorted by name
+        Returns [] if no businesses in that category
     """
-    if category and str(category).strip() and str(category).strip().lower() != "all":
-        rows = get_businesses_by_category(category.strip())
-    else:
-        rows = get_all_businesses()
-    if sort_by == "rating_high":
-        rows = sorted(rows, key=lambda b: (float(b.get("average_rating") or 0), b.get("name") or ""), reverse=True)
-    elif sort_by == "rating_low":
-        rows = sorted(rows, key=lambda b: (float(b.get("average_rating") or 0), b.get("name") or ""))
-    elif sort_by == "reviews":
-        rows = sorted(rows, key=lambda b: (int(b.get("total_reviews") or 0), b.get("name") or ""), reverse=True)
-    elif sort_by == "reviews_low":
-        rows = sorted(rows, key=lambda b: (int(b.get("total_reviews") or 0), b.get("name") or ""))
-    else:
-        rows = sorted(rows, key=lambda b: (b.get("name") or "").lower())
-    return rows
-
-
-def get_business_by_id(bid):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM businesses WHERE id = ?", (bid,))
-    row = cur.fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-
-def search_businesses_by_name(query):
-    """Search businesses by name (case-insensitive partial match)."""
-    if not query or not str(query).strip():
-        return get_all_businesses()
-    conn = get_connection()
-    cur = conn.cursor()
+    # Filter by exact category match, sorted alphabetically
     cur.execute(
-        "SELECT * FROM businesses WHERE lower(name) LIKE ? ORDER BY name",
-        ("%" + query.strip().lower() + "%",)
+        "SELECT * FROM businesses WHERE category = ? ORDER BY name",
+        (category_name,)
     )
     rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    # Convert SQLite Row objects to dictionaries
+    return [dict(business_row) for business_row in rows]
+
+
+def get_businesses_for_directory(category_filter=None, sort_by_option="name"):
+    """
+    Get businesses for directory page with optional filtering and sorting.
+    
+    Combines category filtering with multiple sort options to support
+    different ways users browse the business directory.
+    
+    Args:
+        category_filter (str): Optional category to filter by. If None, \"all\", or empty,
+                               returns all businesses regardless of category.
+        sort_by_option (str): How to sort results:
+                              - 'name' (default) - Alphabetical by business name
+                              - 'rating_high' - Highest rated first (4.5+ stars)
+                              - 'rating_low' - Lowest rated first
+                              - 'reviews' - Most reviewed first (most popular)
+                              - 'reviews_low' - Least reviewed first (hidden gems)
+    
+    Returns:
+        list: List of business dictionaries, filtered and sorted as requested
+    """
+    # Apply category filter if specified
+    if category_filter and str(category_filter).strip() and str(category_filter).strip().lower() != "all":
+        filtered_businesses = get_businesses_by_category(category_filter.strip())
+    else:
+        # No filter: retrieve all businesses
+        filtered_businesses = get_all_businesses()
+    
+    # Apply sort option
+    if sort_by_option == "rating_high":
+        # Highest rated first (4.5+ stars) - best businesses
+        filtered_businesses = sorted(
+            filtered_businesses,
+            key=lambda b: (float(b.get("average_rating") or 0), b.get("name") or ""),
+            reverse=True
+        )
+    elif sort_by_option == "rating_low":
+        # Lowest rated first - discover underrated businesses
+        filtered_businesses = sorted(
+            filtered_businesses,
+            key=lambda b: (float(b.get("average_rating") or 0), b.get("name") or "")
+        )
+    elif sort_by_option == "reviews":
+        # Most reviewed first - most popular/established businesses
+        filtered_businesses = sorted(
+            filtered_businesses,
+            key=lambda b: (int(b.get("total_reviews") or 0), b.get("name") or ""),
+            reverse=True
+        )
+    elif sort_by_option == "reviews_low":
+        # Least reviewed first - actually hidden gems
+        filtered_businesses = sorted(
+            filtered_businesses,
+            key=lambda b: (int(b.get("total_reviews") or 0), b.get("name") or "")
+        )
+    else:
+        # Default: alphabetical by name (case-insensitive)
+        filtered_businesses = sorted(
+            filtered_businesses,
+            key=lambda b: (b.get("name") or "").lower()
+        )
+    
+    return filtered_businesses
+
+
+def get_business_by_id(business_id_to_fetch):
+    """
+    Retrieve a single business record by its unique ID.
+    
+    Used for business detail pages where we need all information about one business.
+    
+    Args:
+        business_id_to_fetch (int): Business ID (primary key)
+    
+    Returns:
+        dict: Complete business record (name, category, rating, reviews, hours, photos, etc.)
+        None: If no business found with this ID
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    # Query single business by primary key (fastest lookup)
+    cur.execute("SELECT * FROM businesses WHERE id = ?", (business_id_to_fetch,))
+    row = cur.fetchone()
+    conn.close()
+    # Convert SQLite Row object to dictionary
+    return dict(row) if row else None
+
+
+def search_businesses_by_name(search_query):
+    """
+    Search the business directory for businesses matching a search term.
+    
+    Uses case-insensitive partial matching (LIKE query) so users can search
+    for "pizza" and find "Mario's Pizza Place", "Pizza Hut", etc.
+    
+    Args:
+        search_query (str): Search term to find (e.g., "coffee", "pizza", "gym")
+    
+    Returns:
+        list: List of matching business dictionaries, sorted alphabetically by name
+        Returns all businesses if query is empty/None (no filter applied)
+    """
+    # If no search query provided, return all businesses
+    if not search_query or not str(search_query).strip():
+        return get_all_businesses()
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    # Use LIKE with wildcards for partial, case-insensitive matching
+    cur.execute(
+        "SELECT * FROM businesses WHERE lower(name) LIKE ? ORDER BY name",
+        ("%" + search_query.strip().lower() + "%",)  # Wildcards on both sides
+    )
+    rows = cur.fetchall()
+    conn.close()
+    # Convert SQLite Row objects to dictionaries
+    return [dict(business_row) for business_row in rows]
 
 
 def get_categories():
+    """
+    Retrieve all unique business categories present in the directory.
+    
+    Returns list of category names for filtering in directory page.
+    Categories include: Food, Retail, Services, Entertainment, Health & Wellness
+    
+    Returns:
+        list: List of unique category strings, sorted alphabetically
+        Example: ["Entertainment", "Food", "Health and Wellness", "Retail", "Services"]
+    """
     conn = get_connection()
     cur = conn.cursor()
+    # Query all unique categories from businesses table, sorted
     cur.execute("SELECT DISTINCT category FROM businesses ORDER BY category")
     rows = cur.fetchall()
     conn.close()
-    return [r[0] for r in rows]
+    # Extract category name from each row tuple (only first column)
+    return [category_name[0] for category_name in rows]
 
 
 def get_all_business_names():

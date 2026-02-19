@@ -1,40 +1,65 @@
 {% extends "base.html" %}
+<!-- PAGE TITLE - Set to "Log in" in browser tab, combined with " — Richmond, VA" from base.html -->
 {% block title %}Log in{% endblock %}
+<!-- PAGE CONTENT - Login form and layout -->
 {% block content %}
 
+<!-- PAGE CONTAINER - Centered login card using flexbox -->
 <div style="display: flex; align-items: center; justify-content: center; min-height: 70vh; padding: 2rem;">
+  <!-- LOGIN CARD - White card with rounded corners, shadow, and padding -->
   <div style="background: var(--color-surface); border-radius: var(--radius-xl); padding: 3rem; box-shadow: var(--shadow-xl); max-width: 450px; width: 100%;">
+    <!-- HEADER SECTION - Welcome message and tagline -->
     <div style="text-align: center; margin-bottom: 2.5rem;">
+      <!-- Main heading - "Welcome Back" -->
       <h1 style="font-size: 2.25rem; font-weight: 700; margin: 0 0 0.75rem 0; color: var(--color-text);">Welcome Back</h1>
+      <!-- Tagline - Encourages users to explore hidden gems -->
       <p style="font-size: 1.05rem; color: var(--color-text-muted); margin: 0;">Discover Richmond's best hidden gems</p>
     </div>
 
+    <!-- LOGIN FORM - POST request to login endpoint -->
     <form method="post" action="{{ url_for('login') }}" style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- EMAIL/USERNAME INPUT FIELD -->
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Label for identifier field -->
         <label for="identifier" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Email or username</label>
+        <!-- Input field accepts either email or username for flexible login -->
+        <!-- Includes focus state styling (blue border, light shadow) and blur state (reset to default) -->
         <input type="text" id="identifier" name="identifier" required autocomplete="username" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)';" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';">
       </div>
 
+      <!-- PASSWORD INPUT FIELD -->
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <!-- Label for password field -->
         <label for="password" style="font-weight: 600; font-size: 0.95rem; color: var(--color-text);">Password</label>
+        <!-- Password input with focus state styling (blue border, light shadow) -->
+        <!-- autocomplete="current-password" helps password managers work correctly -->
         <input type="password" id="password" name="password" required autocomplete="current-password" style="padding: 0.9rem 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; transition: all var(--transition-base); font-family: inherit;" onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 3px rgba(6, 182, 212, 0.1)';" onblur="this.style.borderColor='var(--color-border)'; this.style.boxShadow='none';">
       </div>
 
+      <!-- SUBMIT BUTTON - Sign in button that submits form -->
       <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: 600; margin-top: 0.5rem;">Sign in</button>
       
+      <!-- FORGOT PASSWORD LINK - Directs user to password recovery page -->
       <div style="text-align: center;">
         <a href="{{ url_for('forgot_password') }}" style="color: var(--color-text); text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: color var(--transition-base);" onmouseover="this.style.color='#555'" onmouseout="this.style.color='var(--color-text)'">Forgot your password?</a>
       </div>
     </form>
 
+    <!-- DIVIDER - Visual separator between login and signup sections -->
+    <!-- Uses horizontal lines with centered text "New here?" -->
     <div style="display: flex; align-items: center; margin: 2rem 0; gap: 1rem;">
+      <!-- Left horizontal line -->
       <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
+      <!-- Center text -->
       <span style="font-size: 0.95rem; color: var(--color-text-muted);">New here?</span>
+      <!-- Right horizontal line -->
       <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
     </div>
 
+    <!-- SIGNUP PROMPT SECTION - Encourages new users to create account -->
     <p style="text-align: center; font-size: 1rem; margin: 0; color: var(--color-text-muted);">
       Don't have an account? 
+      <!-- Link to registration page - opens signup form -->
       <a href="{{ url_for('register') }}" style="color: var(--color-text); text-decoration: none; font-weight: 600; transition: color var(--transition-base);" onmouseover="this.style.color='#555';" onmouseout="this.style.color='var(--color-text)';">Create one</a>
     </p>
   </div>

@@ -1,8 +1,8 @@
-# Richmond, VA businesses from Yelp API
+# Richmond, VA Businesses from Yelp
 
-Hidden Gems can load **real small businesses in the Richmond, Virginia area** from the Yelp Fusion API.
+Hidden Gems can load real businesses in the Richmond, Virginia area from the Yelp Fusion API.
 
-## 1. Get a free Yelp API key
+## 1. Get a Yelp API key
 
 1. Go to [Yelp Developers](https://www.yelp.com/developers/v3/manage_app).
 2. Sign in or create a Yelp account.
@@ -22,7 +22,7 @@ Or set the environment variable: `YELP_API_KEY=your-api-key-here`
 
 ## 3. Run the app
 
-When you run `python main.py`:
+When you run `python -m web.app`:
 
 - If **YELP_API_KEY** is set, the app will fetch businesses in **Richmond, VA** from Yelp (Food, Retail, Services, Entertainment, Health & Wellness) and add them to the database.
 - If the key is missing or invalid, the app uses built-in sample businesses instead.

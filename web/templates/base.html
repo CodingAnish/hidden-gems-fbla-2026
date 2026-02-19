@@ -1,73 +1,139 @@
 <!DOCTYPE html>
+<!-- =====================================================
+BASE TEMPLATE FOR HIDDEN GEMS APPLICATION
+=====================================================
+This is the foundation template for the entire Hidden Gems website.
+All other pages extend this template using Jinja2 block inheritance.
+
+SECTIONS:
+- Head: Meta tags, stylesheets, manifest for PWA
+- Header: Navigation bar with user menu dropdown
+- Main: Central content area where child pages render ({% block content %})
+- Footer: Application footer with branding
+- Scripts: Initialization code, favorites counter, mobile menu toggle
+- Components: Conditional includes for authenticated users (chatbot, modals)
+
+KEY FEATURES:
+- Responsive navigation with mobile menu toggle button
+- User authentication state handling (logged in vs. guest)
+- User menu dropdown with profile/settings/favorites/logout links
+- Favorites counter badge that updates in real-time
+- AI chatbot component for authenticated users
+- Flash message display system for notifications
+- Feature modals and help menu components
+- PWA manifest support for mobile installation
+
+USED BY: All content pages (home, login, register, business detail, etc.)
+===================================================== -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Document character encoding for proper text rendering -->
   <meta charset="UTF-8">
+  <!-- Viewport settings for responsive design on all devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Browser theme color (visible in mobile address bar) -->
   <meta name="theme-color" content="#2563EB">
+  <!-- Page description for search engines and social sharing -->
   <meta name="description" content="Discover and support small local businesses in Richmond, VA. Hidden Gems — FBLA 2026.">
+  <!-- Page title with dynamic child page titles and location suffix -->
   <title>{% block title %}Hidden Gems{% endblock %} — Richmond, VA</title>
+  <!-- Main application stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- Chatbot-specific styles (loaded conditionally but defined here) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+  <!-- Feature modals and components stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='features.css') }}">
+  <!-- PWA manifest file for mobile home screen installation -->
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 </head>
 <body>
+  <!-- PAGE HEADER SECTION - Sticky navigation bar at top of page -->
   <header class="header" role="banner" style="position: sticky; top: 0; z-index: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <!-- Header container with logo and navigation -->
     <div class="header-container">
+      <!-- Logo/Brand link - Navigates to help page -->
       <a href="{{ url_for('help_page') }}" class="logo" aria-label="Hidden Gems home">
         Hidden Gems
       </a>
       {% if user %}
+      <!-- AUTHENTICATED USER NAVIGATION -->
+      <!-- Main navigation menu with links to key app sections -->
       <nav class="nav" id="mainNav" role="navigation" aria-label="Main" style="gap: 0.5rem;">
+        <!-- Directory Link - Browse all businesses -->
         <a href="{{ url_for('directory') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'directory' or request.endpoint == 'business_detail' %}border-bottom: 3px solid #2563EB; background: rgba(37, 99, 235, 0.1);{% endif %} transition: all 0.3s;">Directory</a>
+        <!-- Trending Link - View trending/popular businesses -->
         <a href="{{ url_for('trending') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'trending' %}border-bottom: 3px solid #e74c3c; background: rgba(231, 76, 60, 0.1);{% endif %} transition: all 0.3s;">Trending</a>
+        <!-- For You Link - AI-powered personalized recommendations -->
         <a href="{{ url_for('recommendations') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'recommendations' %}border-bottom: 3px solid #9b59b6; background: rgba(155, 89, 182, 0.1);{% endif %} transition: all 0.3s;">For You</a>
+        <!-- Deals Link - View special offers and promotions -->
         <a href="{{ url_for('deals') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'deals' %}border-bottom: 3px solid #f39c12; background: rgba(243, 156, 18, 0.1);{% endif %} transition: all 0.3s;">Deals</a>
+        <!-- Favorites Link - View saved businesses with real-time counter badge -->
         <a href="{{ url_for('favorites') }}" id="favs-link" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'favorites' %}border-bottom: 3px solid #2563EB; background: rgba(37, 99, 235, 0.1);{% endif %} transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;">
           Favorites <span id="fav-count-badge" style="background: #2563EB; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; display: none;">0</span>
         </a>
+        <!-- Help Link - Access FAQ and documentation -->
         <a href="{{ url_for('help_page') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'help_page' %}border-bottom: 3px solid #27ae60; background: rgba(39, 174, 96, 0.1);{% endif %} transition: all 0.3s;">Help</a>
         
-        <!-- User Menu Dropdown -->
+        <!-- USER ACCOUNT DROPDOWN MENU -->
         <div style="position: relative; margin-left: auto; border-left: 1px solid var(--color-border); padding-left: 1.5rem;">
+          <!-- User Menu Button - Shows username and toggles dropdown on click -->
           <button id="userMenuBtn" onclick="toggleUserMenu()" style="padding: 0.75rem 1rem; background: none; border: none; cursor: pointer; font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #2c3e50; transition: all 0.3s;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='#2c3e50'">
             👤 {{ user.username }} <span id="menuArrow" style="font-size: 0.8rem;">▼</span>
           </button>
+          
+          <!-- User Menu Dropdown Container - Hidden by default, shown on button click -->
           <div id="userMenu" style="position: absolute; top: 100%; right: 0; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 200px; display: none; z-index: 1000; margin-top: 0.5rem;">
+            <!-- Profile Link - View/edit user profile -->
             <a href="{{ url_for('profile') }}" style="display: block; padding: 1rem 1.5rem; color: #2c3e50; text-decoration: none; transition: all 0.3s; border-bottom: 1px solid #f0f0f0; font-weight: 600;" onmouseover="this.style.backgroundColor='#f9f9f9'" onmouseout="this.style.backgroundColor='transparent'">
               👤 My Profile
             </a>
+            <!-- Settings Link - Configure account preferences -->
             <a href="{{ url_for('settings') }}" style="display: block; padding: 1rem 1.5rem; color: #2c3e50; text-decoration: none; transition: all 0.3s; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.backgroundColor='#f9f9f9'" onmouseout="this.style.backgroundColor='transparent'">
               ⚙️ Settings
             </a>
+            <!-- Favorites Link - Quick access to saved businesses -->
             <a href="{{ url_for('favorites') }}" style="display: block; padding: 1rem 1.5rem; color: #2c3e50; text-decoration: none; transition: all 0.3s; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.backgroundColor='#f9f9f9'" onmouseout="this.style.backgroundColor='transparent'">
               ❤️ Favorites
             </a>
+            <!-- Logout Link - Sign out and end session (red styling to indicate destructive action) -->
             <a href="{{ url_for('logout') }}" style="display: block; padding: 1rem 1.5rem; color: #d32f2f; text-decoration: none; transition: all 0.3s; font-weight: 600;" onmouseover="this.style.backgroundColor='#ffebee'" onmouseout="this.style.backgroundColor='transparent'">
               🚪 Logout
             </a>
           </div>
         </div>
         
+        <!-- JAVASCRIPT: USER MENU DROPDOWN FUNCTIONALITY -->
         <script>
+          /**
+           * FUNCTION: toggleUserMenu
+           * PURPOSE: Toggle visibility of user dropdown menu on button click
+           * BEHAVIOR: Opens menu when closed, closes when open
+           *          Rotates arrow indicator 180° to show current state
+           */
           let menuOpen = false;
           function toggleUserMenu() {
             const menu = document.getElementById('userMenu');
             const arrow = document.getElementById('menuArrow');
             menuOpen = !menuOpen;
             if (menuOpen) {
-              menu.style.display = 'block';
-              arrow.style.transform = 'rotate(180deg)';
+              menu.style.display = 'block';                  // Show dropdown
+              arrow.style.transform = 'rotate(180deg)';      // Rotate arrow down
             } else {
-              menu.style.display = 'none';
-              arrow.style.transform = 'rotate(0)';
+              menu.style.display = 'none';                   // Hide dropdown
+              arrow.style.transform = 'rotate(0)';           // Rotate arrow up
             }
           }
           
-          // Close menu when clicking outside
+          /**
+           * EVENT: Click outside user menu
+           * PURPOSE: Auto-close dropdown when user clicks outside menu area
+           * BEHAVIOR: Closes menu, resets arrow, sets menuOpen to false
+           */
           document.addEventListener('click', function(event) {
             const userBtn = document.getElementById('userMenuBtn');
             const userMenu = document.getElementById('userMenu');
+            // Check if click is outside both button and menu
             if (userBtn && !userBtn.contains(event.target) && userMenu && !userMenu.contains(event.target)) {
               menuOpen = false;
               userMenu.style.display = 'none';
@@ -76,77 +142,115 @@
           });
         </script>
       </nav>
+      
+      <!-- Mobile Menu Toggle Button - Hidden on desktop, visible on mobile screens -->
       <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav">☰</button>
+      
+      <!-- GUEST USER NAVIGATION (when not authenticated) -->
       {% else %}
+      <!-- Minimal navigation for non-authenticated users with login/signup options -->
       <nav class="nav" role="navigation">
+        <!-- Login Link - Directs to login page -->
         <a href="{{ url_for('login') }}" style="padding: 0.75rem 1rem; color: var(--color-text);">Log in</a>
+        <!-- Sign Up Link - Directs to registration page with primary button styling -->
         <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm" style="color: var(--color-text);">Sign up</a>
       </nav>
       {% endif %}
     </div>
   </header>
 
+  <!-- HEADER SCRIPT: Favorites Counter Badge Management -->
   <script>
-    // Update favorites counter badge
+    /**
+     * FUNCTION: updateFavsBadge
+     * PURPOSE: Update the favorites counter badge in the navigation menu
+     * BEHAVIOR: Reads from localStorage Favorites object and displays count badge
+     *          Hides badge if no favorites exist, shows count if favorites present
+     * TRIGGERS: On page load and when localStorage changes (sync across tabs)
+     */
     function updateFavsBadge() {
+      // Get favorites array from localStorage (managed by Favorites class)
       const favs = Favorites?.all || [];
+      // Get reference to badge element in the DOM
       const badge = document.getElementById('fav-count-badge');
+      
+      // Update badge visibility based on favorites count
       if (badge && favs.length > 0) {
-        badge.textContent = favs.length;
-        badge.style.display = 'flex';
+        badge.textContent = favs.length;        // Display count of favorites
+        badge.style.display = 'flex';           // Show badge
       } else if (badge) {
-        badge.style.display = 'none';
+        badge.style.display = 'none';           // Hide badge if no favorites
       }
     }
     
-    // Initial update and listen for changes
+    // INITIALIZE: Run updateFavsBadge when page load is complete
     document.addEventListener('DOMContentLoaded', updateFavsBadge);
+    // SYNC: Listen for storage changes (favorites updated in another browser tab)
     window.addEventListener('storage', updateFavsBadge);
   </script>
+  
+  <!-- MAIN CONTENT AREA - Where child page templates render their content -->
   <main class="main" role="main">
+    <!-- FLASH MESSAGES SECTION - Displays notifications/alerts to user -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash" style="margin-bottom: var(--spacing-3xl);">
+          <!-- Iterate through all flash messages (success, error, info, etc.) -->
           {% for category, msg in messages %}
+            <!-- Display each message with category-specific styling (flash-success, flash-error, etc.) -->
             <div class="flash-{{ category }}" style="font-size: 1rem; padding: 1.25rem 1.5rem; border-radius: 10px;">{{ msg }}</div>
           {% endfor %}
         </div>
       {% endif %}
     {% endwith %}
+    <!-- CHILD PAGE CONTENT - Block that child templates override with their own content -->
     {% block content %}{% endblock %}
   </main>
 
+  <!-- FOOTER SECTION - Application footer with branding and copyright -->
   <footer class="footer" style="padding: var(--spacing-3xl) var(--spacing-xl); margin-top: auto;">
+    <!-- Footer content container -->
     <div style="max-width: var(--content-max-width); margin: 0 auto; text-align: center;">
+      <!-- Application name and tagline -->
       <p style="margin: 0; font-size: 0.95rem;">
          <strong>Hidden Gems</strong> — Discover local businesses in Richmond, VA
       </p>
+      <!-- FBLA competition year and competition info -->
       <p style="margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--color-text-muted);">
         Build a thriving local community. FBLA 2026.
       </p>
     </div>
   </footer>
 
+  <!-- SCRIPT: Mobile Menu Toggle Functionality -->
   <script>
+    /**
+     * EVENT: Mobile menu button click
+     * PURPOSE: Toggle mobile navigation menu visibility on small screens
+     * BEHAVIOR: Toggles 'open' class on nav element and updates aria-expanded state
+     * ACCESSIBILITY: Updates aria-expanded for screen readers
+     */
     document.getElementById('menuBtn')?.addEventListener('click', function() {
       const nav = document.querySelector('.nav');
-      nav.classList.toggle('open');
-      this.setAttribute('aria-expanded', nav.classList.contains('open'));
+      nav.classList.toggle('open');                          // Toggle open/closed state
+      this.setAttribute('aria-expanded', nav.classList.contains('open')); // Update accessibility
     });
   </script>
   
+  <!-- CONDITIONAL COMPONENTS FOR AUTHENTICATED USERS -->
   {% if user %}
-  <!-- AI Chatbot (only for logged-in users) -->
+  <!-- AI Chatbot Component - Only shown to logged-in users -->
   {% include 'chatbot.html' %}
   
-  <!-- Feature Modals & Components -->
+  <!-- Feature Modals & Components - Review modal and help menu -->
   {% include 'components/review_modal.html' %}
   {% include 'components/help_menu.html' %}
   
-  <!-- Features JavaScript & Initialization -->
+  <!-- Features JavaScript & Initialization - Logic for feature modals and interactions -->
   <script src="{{ url_for('static', filename='features.js') }}"></script>
   {% endif %}
   
+  <!-- CHILD PAGE SCRIPTS BLOCK - Child pages can inject custom scripts here -->
   {% block scripts %}{% endblock %}
 </body>
 </html>

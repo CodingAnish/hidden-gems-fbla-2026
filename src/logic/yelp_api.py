@@ -284,5 +284,13 @@ def fetch_richmond_businesses(max_per_category=50):
 
 
 def is_configured():
-    """True if Yelp API key is set."""
+    """
+    Check if the Yelp API is properly configured and ready to use.
+    
+    This verifies that a valid YELP_API_KEY is available (either from
+    config.py or environment variable).
+    
+    Returns:
+        bool: True if API key is set and non-empty, False otherwise
+    """
     return bool(_get_api_key())

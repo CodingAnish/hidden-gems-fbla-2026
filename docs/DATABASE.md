@@ -1,6 +1,6 @@
-# Hidden Gems — Database Description
+# Hidden Gems Database Notes
 
-Local **SQLite** database: `hidden_gems.db` (created in the project root on first run).
+The app uses a local SQLite database named `hidden_gems.db`, created in the project root on first run.
 
 ## Tables
 
@@ -20,7 +20,7 @@ Stores accounts for email login. Login is only allowed when `email_verified` is 
 
 ### 2. `email_verification_codes`
 
-Stores verification codes for **email verification** after registration (or when resending). In the standalone app the code is shown on-screen; in a full app it would be sent by email.
+Stores verification codes for email verification after registration (or when resending). In the default setup the code is shown on-screen; with email configured it is sent by email.
 
 | Column      | Type    | Description        |
 |-------------|---------|--------------------|
@@ -33,7 +33,7 @@ Stores verification codes for **email verification** after registration (or when
 
 ### 3. `verification_attempts`
 
-Stores **every** verification attempt so you can see bot-prevention activity. Used at login (and can be used before review/favorite actions).
+Stores verification attempts so you can track bot-prevention activity. Used at login (and can be used before review/favorite actions).
 
 | Column          | Type    | Description                                  |
 |-----------------|---------|----------------------------------------------|
@@ -47,7 +47,7 @@ Stores **every** verification attempt so you can see bot-prevention activity. Us
 | attempted_at    | TEXT    | ISO datetime of attempt                      |
 | context         | TEXT    | e.g. `"login"`, `"review"`, `"favorite"`     |
 
-**How to view:** In the app: Main Menu → **View Verification Table (DB Records)**. You can also open `hidden_gems.db` with any SQLite browser (e.g. DB Browser for SQLite) and query `verification_attempts`.
+**How to view:** In the app: Main Menu → **View Verification Table (DB Records)**. You can also open `hidden_gems.db` with a SQLite browser and query `verification_attempts`.
 
 ---
 
@@ -68,7 +68,7 @@ Local business directory.
 
 ### 5. `deals`
 
-Special deals/coupons per business.
+Special deals or promotions for a business.
 
 | Column      | Type    | Description        |
 |-------------|---------|--------------------|

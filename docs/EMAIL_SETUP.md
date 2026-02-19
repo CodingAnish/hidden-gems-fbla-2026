@@ -1,6 +1,6 @@
-# Send real verification emails (Gmail)
+# Send Verification Emails (Gmail)
 
-To have Hidden Gems email the 6-digit code to users instead of showing it on screen:
+If you want the app to email the 6-digit verification code instead of showing it on screen, follow the steps below.
 
 ## 1. Create a Gmail App Password
 
@@ -30,7 +30,7 @@ Save the file.
 
 ## 3. Run the app
 
-Start Hidden Gems with `python main.py`. When someone registers or needs to verify, the code will be sent to their email and the app will say “We've sent a verification code to …”.
+Start the web app with `python -m web.app`. When someone registers or needs to verify, the code will be sent to their email and the app will display a confirmation message.
 
 ---
 
