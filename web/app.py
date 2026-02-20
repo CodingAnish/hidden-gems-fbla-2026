@@ -392,7 +392,7 @@ def favorites():
     user = current_user()
     if not user:
         return redirect(url_for("login"))
-    favorite_businesses = queries.get_favorite_businesses(user["id"])
+    favorite_businesses = queries.get_favorite_businesses(user["id"]) or []
     
     # Add deals to each business
     for business in favorite_businesses:
