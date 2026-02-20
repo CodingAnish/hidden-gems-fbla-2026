@@ -241,29 +241,30 @@ def call_cohere_api(messages, user_message, system_prompt, api_key):
 
 def call_groq_api(messages, user_message, system_prompt, api_key):
     """Call Groq API (FREE, FAST, BACKUP OPTION)."""
-    conversation = [{"role": "system", "content": system_prompt}]
-    conversation.extend(messages[-10:])  # Last 5 exchanges
-    conversation.append({"role": "user", "content": user_message})
-    
-    data = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": conversation,
-        "temperature": 0.7,
-        "max_tokens": 400
-    }
-    
-    req = urllib.request.Request(
-        "https://api.groq.com/openai/v1/chat/completions",
-        data=json.dumps(data).encode(),
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-    )
-    
-    with urllib.request.urlopen(req, timeout=10) as response:
-        result = json.loads(response.read().decode())
-        return result["choices"][0]["message"]["content"]
+    try:
+        from groq import Groq
+        
+        client = Groq(api_key=api_key)
+        
+        # Build conversation
+        conversation = [{"role": "system", "content": system_prompt}]
+        conversation.extend(messages[-10:])  # Last 10 messages
+        conversation.append({"role": "user", "content": user_message})
+        
+        # Call Groq API
+        response = client.chat.completions.create(
+            model="mixtral-8x7b-32768",  # or "llama2-70b-4096"
+            messages=conversation,
+            temperature=0.7,
+            max_tokens=400
+        )
+        
+        return response.choices[0].message.content
+        
+    except ImportError:
+        raise Exception("groq not installed. Run: pip install groq")
+    except Exception as e:
+        raise Exception(f"Groq API error: {str(e)}")
 
 
 def call_huggingface_api(messages, user_message, system_prompt, api_key):
