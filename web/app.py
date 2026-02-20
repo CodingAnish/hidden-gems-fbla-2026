@@ -393,53 +393,27 @@ def favorites():
     if not user:
         return redirect(url_for("login"))
     
+    # Get favorite businesses
     favorite_businesses = []
-    
     try:
-        # Get favorite businesses
-        fav_result = queries.get_favorite_businesses(user["id"])
-        if not fav_result:
-            favorite_businesses = []
-        else:
-            # Convert each business row to dict
-            favorite_businesses = []
-            for business in fav_result:
-                try:
-                    # Handle both dict and sqlite3.Row objects
-                    if isinstance(business, dict):
-                        biz_dict = business
-                    else:
-                        # Try to convert Row to dict
-                        biz_dict = {key: business[key] for key in business.keys()} if hasattr(business, 'keys') else dict(business)
-                    
-                    # Get business ID
-                    biz_id = biz_dict.get("id")
-                    if not biz_id:
-                        continue
-                    
-                    # Get deals for this business
-                    try:
-                        deals = queries.get_deals_by_business(biz_id) or []
-                        biz_dict["deals"] = deals
-                    except Exception:
-                        biz_dict["deals"] = []
-                    
-                    favorite_businesses.append(biz_dict)
-                except Exception as item_err:
-                    print(f"Error processing favorite item: {item_err}")
-                    continue
+        result = queries.get_favorite_businesses(user["id"])
+        if result:
+            for biz in result:
+                if isinstance(biz, dict):
+                    biz_dict = biz.copy()
+                else:
+                    biz_dict = dict(biz) if hasattr(biz, 'keys') else {k: biz[k] for k in biz.keys()}
+                
+                deals = queries.get_deals_by_business(biz_dict.get("id")) or []
+                biz_dict["deals"] = deals
+                favorite_businesses.append(biz_dict)
     except Exception as e:
-        print(f"Error loading favorites: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Error getting favorites: {e}")
         favorite_businesses = []
     
     # Pagination
     items_per_page = 12
-    try:
-        page = max(1, int(request.args.get("page", 1)))
-    except (ValueError, TypeError):
-        page = 1
+    page = max(1, int(request.args.get("page", 1)))
     
     total_businesses = len(favorite_businesses)
     total_pages = max(1, (total_businesses + items_per_page - 1) // items_per_page)
