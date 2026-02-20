@@ -63,50 +63,21 @@ def get_business_context():
     all_businesses = queries.get_all_businesses()
     available_categories = queries.get_categories()
     
-    # Format business data concisely (limit to 20 for faster responses)
+    # Format business data concisely (limit to 10 for speed)
     formatted_businesses = []
-    for business in all_businesses[:20]:
+    for business in all_businesses[:10]:
         formatted_businesses.append({
             "name": business.get("name"),
             "category": business.get("category"),
             "rating": business.get("average_rating"),
-            "review_count": business.get("total_reviews"),
-            "address": business.get("address", "")[:50]  # Truncate long addresses
+            "review_count": business.get("total_reviews")
         })
     
-    # Build comprehensive system prompt
-    system_context = f"""You are an AI assistant for Hidden Gems, a local business directory in Richmond, Virginia.
-
-AVAILABLE BUSINESS CATEGORIES: {', '.join(available_categories)}
-
-TOP BUSINESSES IN DATABASE:
-{formatted_businesses}
-
-YOUR ROLE & RESPONSIBILITIES:
-- Help users discover and learn about local Richmond businesses
-- Answer questions about business details, categories, ratings, and special deals
-- Provide personalized business recommendations based on user preferences and needs
-- Maintain friendly, conversational, and concise tone
-- Use emojis sparingly (1-2 per response) for emphasis
-- Always end responses with a question or call-to-action to keep conversation flowing
-- If unable to find specific information, suggest nearby alternatives
-
-RESPONSE FORMATTING GUIDELINES:
-- Keep responses under 150 words for readability
-- Display maximum 3-5 businesses per response to avoid overwhelming user
-- Use bullet points for lists of businesses or features
-- Show star ratings as ★ symbols (★★★★☆ = 4/5 stars)
-- Be enthusiastic and supportive of local Richmond businesses
-
-SEARCH & RECOMMENDATION CAPABILITIES:
-- Filter businesses by: Category, Rating (show highest first), Review count, Special deals
-- When user searches, prioritize:
-  1. Exact category matches
-  2. Highest ratings
-  3. Most recent reviews
-- Mention business ratings and review counts to build credibility
-
-Remember: You're helping Richmond residents support local small businesses!"""
+    # Build MINIMAL system prompt for speed
+    system_context = f"""You are Hidden Gems AI for Richmond, VA businesses.
+Categories: {', '.join(available_categories)}
+Businesses: {formatted_businesses}
+Be brief, friendly, and suggest 2-3 businesses per response. Keep it under 100 words."""
     
     return system_context
 
@@ -206,7 +177,7 @@ def call_cohere_api(messages, user_message, system_prompt, api_key):
         # Build message history for context
         # Cohere expects roles: "User", "Chatbot", "System", "Tool"
         conversation_history = []
-        for msg in messages[-5:]:  # Last 5 messages for faster responses
+        for msg in messages[-3:]:  # Last 3 messages only for speed
             # Map common role names to Cohere format
             role = msg["role"]
             if role == "user":
@@ -227,8 +198,8 @@ def call_cohere_api(messages, user_message, system_prompt, api_key):
             model="command-r-08-2024",
             preamble=system_prompt,
             chat_history=conversation_history,
-            temperature=0.7,
-            max_tokens=350  # Reduced for faster responses
+            temperature=0.5,  # Lower for speed
+            max_tokens=300  # Reduced
         )
         
         return response.text
@@ -248,15 +219,15 @@ def call_groq_api(messages, user_message, system_prompt, api_key):
         
         # Build conversation
         conversation = [{"role": "system", "content": system_prompt}]
-        conversation.extend(messages[-5:])  # Last 5 messages (faster)
+        conversation.extend(messages[-3:])  # Only last 3 messages for speed
         conversation.append({"role": "user", "content": user_message})
         
-        # Call Groq API
+        # Call Groq API with fastest model
         response = client.chat.completions.create(
-            model="mixtral-8x7b-32768",  # or "llama2-70b-4096"
+            model="llama2-70b-4096",  # Faster than mixtral
             messages=conversation,
-            temperature=0.7,
-            max_tokens=350  # Reduced for faster responses
+            temperature=0.5,  # Lower for faster inference
+            max_tokens=300  # Further reduced
         )
         
         return response.choices[0].message.content
@@ -280,8 +251,8 @@ def call_huggingface_api(messages, user_message, system_prompt, api_key):
             {"role": "system", "content": system_prompt}
         ]
         
-        # Add conversation history (last 5 messages for faster responses)
-        for msg in messages[-5:]:
+        # Add conversation history (last 3 messages for speed)
+        for msg in messages[-3:]:
             formatted_messages.append({
                 "role": msg["role"],
                 "content": msg["content"]
@@ -305,8 +276,8 @@ def call_huggingface_api(messages, user_message, system_prompt, api_key):
                 response = client.chat_completion(
                     model=model,
                     messages=formatted_messages,
-                    max_tokens=350,  # Reduced for faster responses
-                    temperature=0.7,
+                    max_tokens=300,  # Reduced for speed
+                    temperature=0.5,  # Lower temp for faster inference
                     top_p=0.9
                 )
                 
