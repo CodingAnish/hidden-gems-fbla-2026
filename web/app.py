@@ -47,6 +47,23 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent JavaScript access to ses
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24-hour session timeout
 
+# Global error handler for 500 errors
+@app.errorhandler(500)
+def handle_500(e):
+    """Handle internal server errors gracefully."""
+    import traceback
+    print(f"Internal Server Error: {str(e)}")
+    print(traceback.format_exc())
+    return render_template("error.html", error="An unexpected error occurred. Please try again."), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle all unhandled exceptions."""
+    import traceback
+    print(f"Unhandled Exception: {str(e)}")
+    print(traceback.format_exc())
+    return render_template("error.html", error="An error occurred. Please try again."), 500
+
 
 # Register custom Jinja2 filters
 @app.template_filter('from_json')
@@ -393,25 +410,48 @@ def favorites():
     if not user:
         return redirect(url_for("login"))
     
+    favorite_businesses = []
+    
     try:
-        favorite_businesses = queries.get_favorite_businesses(user["id"]) or []
+        # Get favorite businesses
+        fav_result = queries.get_favorite_businesses(user["id"])
+        favorite_businesses = fav_result if fav_result else []
         
         # Process businesses and add deals
         processed_businesses = []
         for business in favorite_businesses:
-            # Ensure business is a dict
-            if not isinstance(business, dict):
-                business = dict(business)
-            
-            # Add deals safely
-            deals = queries.get_deals_by_business(business.get("id")) or []
-            business["deals"] = deals
-            processed_businesses.append(business)
+            try:
+                # Ensure business is a dict
+                if not isinstance(business, dict):
+                    try:
+                        business = dict(business)
+                    except Exception:
+                        continue  # Skip problematic businesses
+                
+                # Safely get business ID
+                biz_id = business.get("id")
+                if not biz_id:
+                    continue
+                
+                # Add deals safely
+                try:
+                    deals = queries.get_deals_by_business(biz_id)
+                    business["deals"] = deals if deals else []
+                except Exception:
+                    business["deals"] = []  # Default to empty if deals fail
+                
+                processed_businesses.append(business)
+            except Exception as item_error:
+                # Skip individual items that cause errors
+                continue
         
         favorite_businesses = processed_businesses
+    
     except Exception as e:
-        # Log error and show empty favorites
+        # Log error but continue with empty list
+        import traceback
         print(f"Error loading favorites: {str(e)}")
+        print(traceback.format_exc())
         favorite_businesses = []
     
     # Pagination: 12 items per page
@@ -420,20 +460,25 @@ def favorites():
         page = int(request.args.get("page", 1))
         if page < 1:
             page = 1
-    except ValueError:
+    except (ValueError, TypeError):
         page = 1
     
-    total_businesses = len(favorite_businesses)
-    total_pages = (total_businesses + items_per_page - 1) // items_per_page
+    total_businesses = len(favorite_businesses) if favorite_businesses else 0
+    total_pages = (total_businesses + items_per_page - 1) // items_per_page if total_businesses > 0 else 1
     
     if page > total_pages and total_pages > 0:
         page = total_pages
     
     start_idx = (page - 1) * items_per_page
     end_idx = start_idx + items_per_page
-    businesses = favorite_businesses[start_idx:end_idx]
+    businesses = favorite_businesses[start_idx:end_idx] if favorite_businesses else []
     
-    return render_template("favorites.html", user=user, businesses=businesses, page=page, total_pages=total_pages, total_businesses=total_businesses)
+    try:
+        return render_template("favorites.html", user=user, businesses=businesses, page=page, total_pages=total_pages, total_businesses=total_businesses)
+    except Exception as template_error:
+        # If template rendering fails, return safe response
+        print(f"Template error: {str(template_error)}")
+        return f"<html><head><title>Favorites</title></head><body><h1>Favorites</h1><p>You have {total_businesses} favorite businesses.</p></body></html>"
 
 
 @app.route("/deals")

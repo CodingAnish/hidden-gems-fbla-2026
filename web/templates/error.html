@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="text-align: center; padding: 50px 20px;">
+    <h1 style="color: #d32f2f; margin-bottom: 20px;">Oops, Something Went Wrong</h1>
+    <p style="font-size: 18px; color: #666; margin-bottom: 30px;">{{ error }}</p>
+    
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('directory') }}" class="btn btn-primary" style="padding: 10px 20px; text-decoration: none; background-color: #1976d2; color: white; border-radius: 4px;">
+            Back to Directory
+        </a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary" style="padding: 10px 20px; text-decoration: none; background-color: #666; color: white; border-radius: 4px; margin-left: 10px;">
+            Home
+        </a>
+    </div>
+    
+    <p style="color: #999; font-size: 14px;">If this problem persists, please contact support.</p>
+</div>
+{% endblock %}
