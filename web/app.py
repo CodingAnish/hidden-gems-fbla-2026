@@ -394,6 +394,10 @@ def favorites():
         return redirect(url_for("login"))
     favorite_businesses = queries.get_favorite_businesses(user["id"])
     
+    # Add deals to each business
+    for business in favorite_businesses:
+        business["deals"] = queries.get_deals_by_business(business["id"])
+    
     # Pagination: 12 items per page
     items_per_page = 12
     try:
