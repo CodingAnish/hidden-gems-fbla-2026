@@ -5,9 +5,12 @@ Handles sending transactional emails (verification, password reset) via SendGrid
 Configuration can come from environment variables or config.py file.
 Falls back gracefully if SendGrid is not configured (for development).
 
+Emails are sent asynchronously in background threads to avoid blocking the request.
+
 Hidden Gems | FBLA 2026
 """
 import os
+import threading
 
 try:
     from sendgrid import SendGridAPIClient
@@ -72,9 +75,44 @@ def is_email_configured():
 # EMAIL SENDING FUNCTIONS
 # ============================================
 
+def _send_email_async(to_email, subject, body, email_config):
+    """
+    Send email asynchronously in a background thread.
+    
+    Args:
+        to_email (str): Recipient email address
+        subject (str): Email subject
+        body (str): Email body text
+        email_config (dict): Email configuration with api_key, from_email, from_name
+    
+    Returns:
+        None (runs in background)
+    """
+    try:
+        message = Mail(
+            from_email=(email_config["from_email"], email_config["from_name"]),
+            to_emails=to_email,
+            subject=subject,
+            plain_text_content=body
+        )
+        
+        sg = SendGridAPIClient(email_config["api_key"])
+        response = sg.send(message)
+        
+        if response.status_code in [200, 201, 202]:
+            print(f"✓ Email sent to {to_email}")
+        else:
+            print(f"✗ Email failed to {to_email} (status {response.status_code})")
+            
+    except Exception as e:
+        print(f"✗ Email error for {to_email}: {str(e)}")
+
+
 def send_verification_email(recipient_email, verification_code):
     """
     Send email verification code to user during registration.
+    
+    ASYNC: Email is sent in background thread - returns immediately without blocking.
     
     Args:
         recipient_email (str): Email address to send to
@@ -82,8 +120,8 @@ def send_verification_email(recipient_email, verification_code):
     
     Returns:
         tuple: (success: bool, error_message: str or None)
-            - On success: (True, None)
-            - On failure: (False, error_description)
+            - Immediate: (True, None) - email queued for background sending
+            - If not configured: (False, error_description)
     """
     # Check if email is configured
     if not is_email_configured():
@@ -108,33 +146,23 @@ If you didn't create a Hidden Gems account, you can ignore this email.
 Richmond, Virginia
 """
     
-    # Create SendGrid email message
-    try:
-        message = Mail(
-            from_email=(email_config["from_email"], email_config["from_name"]),
-            to_emails=recipient_email,
-            subject=email_subject,
-            plain_text_content=email_body
-        )
-        
-        # Send email via SendGrid API
-        sg = SendGridAPIClient(email_config["api_key"])
-        response = sg.send(message)
-        
-        # Check response status
-        if response.status_code in [200, 201, 202]:
-            return True, None
-        else:
-            return False, f"SendGrid returned status {response.status_code}"
-            
-    except Exception as e:
-        # Return error details for logging/debugging
-        return False, str(e)
+    # Send email in background thread (non-blocking)
+    thread = threading.Thread(
+        target=_send_email_async,
+        args=(recipient_email, email_subject, email_body, email_config),
+        daemon=True
+    )
+    thread.start()
+    
+    # Return immediately - email is being sent in background
+    return True, None
 
 
 def send_password_reset_email(recipient_email, password_reset_link):
     """
     Send password reset link to user via email.
+    
+    ASYNC: Email is sent in background thread - returns immediately without blocking.
     
     Args:
         recipient_email (str): Email address to send to
@@ -142,8 +170,8 @@ def send_password_reset_email(recipient_email, password_reset_link):
     
     Returns:
         tuple: (success: bool, error_message: str or None)
-            - On success: (True, None)
-            - On failure: (False, error_description)
+            - Immediate: (True, None) - email queued for background sending
+            - If not configured: (False, error_description)
     """
     # Check if email is configured
     if not is_email_configured():
@@ -166,25 +194,13 @@ This link is valid for 1 hour. If you didn't request this, you can ignore this e
 Richmond, Virginia
 """
     
-    # Create SendGrid email message
-    try:
-        message = Mail(
-            from_email=(email_config["from_email"], email_config["from_name"]),
-            to_emails=recipient_email,
-            subject=email_subject,
-            plain_text_content=email_body
-        )
-        
-        # Send email via SendGrid API
-        sg = SendGridAPIClient(email_config["api_key"])
-        response = sg.send(message)
-        
-        # Check response status
-        if response.status_code in [200, 201, 202]:
-            return True, None
-        else:
-            return False, f"SendGrid returned status {response.status_code}"
-            
-    except Exception as e:
-        # Return error details for logging/debugging
-        return False, str(e)
+    # Send email in background thread (non-blocking)
+    thread = threading.Thread(
+        target=_send_email_async,
+        args=(recipient_email, email_subject, email_body, email_config),
+        daemon=True
+    )
+    thread.start()
+    
+    # Return immediately - email is being sent in background
+    return True, None
