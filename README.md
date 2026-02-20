@@ -1,374 +1,382 @@
-# Hidden Gems - Business Discovery Platform 🏪
+# Hidden Gems - Local Business Discovery Platform
 
-**A full-featured business discovery web application built with Flask for FBLA 2026**
+A modern web application for discovering and reviewing local businesses in Richmond, Virginia. Built with Flask for FBLA 2026.
 
-A local business discovery web app that helps people find small businesses in Richmond, VA, read reviews, save favorites, and explore trending nearby businesses.
+## Overview
 
-## ✨ Features
+Hidden Gems helps residents discover small, independent businesses through browsing, searching, reviews, and AI-powered recommendations. The platform combines community reviews, interactive maps, and intelligent chatbot assistance to connect people with local gems they might otherwise miss.
 
-- ✅ **User Authentication** - Registration, email verification, secure password reset
-- ✅ **Business Directory** - Browse, search, and filter businesses by category (Food, Retail, Services, Entertainment, Health)
-- ✅ **Community Reviews** - Submit detailed reviews (10-500 characters) with 1-5 star ratings
-- ✅ **Smart Validation** - Real-time validation alerts displayed at page bottom (always visible!)
-- ✅ **Favorites System** - Save and manage favorite businesses with persistent storage
-- ✅ **AI Chatbot** - Get personalized business recommendations via Claude AI (with rule-based fallback)
-- ✅ **Interactive Map** - View businesses on Google Map with location-based filtering
-- ✅ **Trending & Recommendations** - Discover popular and AI-recommended businesses
-- ✅ **Responsive UI** - Mobile-friendly design for all screen sizes
-- ✅ **CAPTCHA Protection** - Math-based verification to prevent spam reviews
+## Key Features
 
-## 🚀 Quick Start
+- **User Authentication** - Secure registration, email verification, and password reset functionality
+- **Business Directory** - Browse and filter businesses by category, ratings, and reviews
+- **Community Reviews** - Submit detailed reviews with 1-5 star ratings and spam protection via CAPTCHA
+- **Favorites System** - Save and manage your favorite businesses for quick access
+- **AI Chatbot** - Get personalized business recommendations powered by Groq's Llama 3 API
+- **Interactive Map** - View business locations and explore neighborhoods with Google Maps integration
+- **Trending Section** - Discover what other users are reviewing and enjoying
+- **Responsive Design** - Fully mobile-friendly interface for on-the-go business hunting
+- **Real-time Validation** - Intuitive validation alerts for forms and user input
+
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.8+ installed
+- Python 3.10 or higher
 - pip (Python package manager)
-- Virtual environment (highly recommended)
+- Virtual environment tool (venv or virtualenv)
 
 ### Installation
 
-1. **Clone and setup virtual environment**
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/[YOUR-USERNAME]/hidden-gems-fbla-2026.git
+   git clone https://github.com/CodingAnish/hidden-gems-fbla-2026.git
    cd hidden-gems-fbla-2026-main
-   
-   # Create virtual environment
+   ```
+
+2. **Create and activate virtual environment**
+   ```bash
    python3 -m venv venv
-   source venv/bin/activate  # Mac/Linux
+   source venv/bin/activate  # macOS/Linux
    # or: venv\Scripts\activate  # Windows
    ```
 
-2. **Install dependencies**
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Start the application**
+4. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys (optional - app works without them)
+   ```
+
+5. **Run the application**
    ```bash
    python3 -m web.app
    ```
 
-4. **Open in browser**
-   ```
-   http://localhost:5001
-   ```
+6. **Access the app**
+   - Open http://localhost:5001 in your browser
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 hidden-gems-fbla-2026-main/
+├── config/                       # Configuration files and templates
+│   ├── config.py                 # Live configuration (local development)
+│   └── config.example.py         # Configuration template
 │
-├── src/                          # Core business logic and database
+├── src/                          # Core application logic
 │   ├── database/
-│   │   ├── db.py                 # SQLite initialization & schema
+│   │   ├── db.py                 # SQLite initialization and schema
 │   │   ├── queries.py            # All database query functions
-│   │   └── seed.py               # Sample data (167 businesses)
+│   │   └── seed.py               # Sample data (167 businesses, 5 categories)
 │   │
 │   ├── logic/
-│   │   ├── auth.py               # Password hashing & user validation
-│   │   ├── chatbot.py            # AI recommendations & conversations
-│   │   ├── email_sender.py       # Email delivery (SMTP)
-│   │   ├── geocoding.py          # Google Maps integration
-│   │   ├── yelp_api.py           # Yelp business data (optional)
+│   │   ├── auth.py               # User authentication and password hashing
+│   │   ├── chatbot.py            # AI chatbot with Groq API integration
+│   │   ├── email_sender.py       # SendGrid email delivery
+│   │   ├── geocoding.py          # Google Maps geocoding
+│   │   ├── yelp_api.py           # Optional Yelp API integration
 │   │   └── verifier.py           # Email verification logic
 │   │
-│   └── __init__.py
+│   └── verification/             # Email verification module
+│       └── verifier.py
 │
 ├── web/                          # Flask web application
 │   ├── app.py                    # Main Flask app with all routes
 │   ├── static/                   # Frontend assets
-│   │   ├── style.css             # Global styles
-│   │   ├── features.css          # Feature-specific styles (validation alerts, reviews)
-│   │   ├── chat.css              # Chatbot styles
-│   │   ├── chatbot.css           # Additional chatbot styles
-│   │   ├── features.js           # Reviews, favorites, validation logic
-│   │   ├── chat.js               # Chatbot interface
+│   │   ├── style.css             # Global styling
+│   │   ├── features.css          # Feature-specific styles
+│   │   ├── chat.css              # Chatbot interface styles
+│   │   ├── chatbot.css           # Additional chatbot styling
+│   │   ├── features.js           # Reviews, favorites, validation
+│   │   ├── chat.js               # Chat interface logic
 │   │   ├── chatbot.js            # Chatbot functionality
-│   │   └── manifest.json         # Progressive Web App config
+│   │   └── manifest.json         # PWA configuration
 │   │
 │   └── templates/                # Jinja2 HTML templates
-│       ├── base.html             # Base layout (navbar, footer)
+│       ├── base.html             # Base layout template
 │       ├── home.html             # Landing page
-│       ├── directory.html        # Business directory with filters
-│       ├── business.html         # Business details & review form
-│       ├── map.html              # Interactive map (Google Maps)
+│       ├── directory.html        # Business directory and search
+│       ├── business.html         # Business details and reviews
+│       ├── map.html              # Interactive map
 │       ├── trending.html         # Trending businesses
 │       ├── recommendations.html  # AI recommendations
 │       ├── favorites.html        # Saved businesses
-│       ├── profile.html          # User profile & stats
-│       ├── settings.html         # User preferences
-│       ├── help.html             # Help & FAQ
+│       ├── profile.html          # User profile
+│       ├── settings.html         # User settings
+│       ├── help.html             # Help and FAQ
 │       ├── login.html            # Login form
 │       ├── register.html         # Registration form
 │       ├── verify.html           # Email verification
-│       ├── forgot-password.html  # Password reset request
-│       ├── reset-password.html   # Password reset form
+│       ├── forgot-password.html  # Password reset
+│       ├── reset-password.html   # New password form
 │       └── components/           # Reusable UI components
-│           ├── review_modal.html # Review submission modal
+│           ├── review_modal.html
 │           ├── filters_section.html
 │           ├── deals_section.html
 │           └── help_menu.html
 │
 ├── docs/                         # Comprehensive documentation
-│   ├── ARCHITECTURE.md           # System design overview
-│   ├── DATABASE.md               # Database schema & design
-│   ├── QUICK_REFERENCE.md        # Setup quick guide
-│   ├── CHATBOT_SETUP.md          # LLM integration guide
+│   ├── ARCHITECTURE.md           # System design and overview
+│   ├── DATABASE.md               # Database schema and design
+│   ├── QUICK_REFERENCE.md        # Quick setup guide
+│   ├── DEPLOYMENT.md             # Render deployment guide
+│   ├── CHATBOT_SETUP.md          # AI chatbot configuration
 │   ├── GROQ_CHATBOT_SETUP.md     # Groq-specific setup
-│   ├── EMAIL_SETUP.md            # Email configuration guide
-│   └── YELP_SETUP.md             # Yelp API configuration
+│   ├── EMAIL_SETUP.md            # Email configuration
+│   ├── YELP_SETUP.md             # Yelp API setup
+│   └── GOOGLE_MAPS_SETUP.md      # Google Maps integration
 │
-├── config.example.py             # Template for configuration
+├── scripts/                      # Utility scripts
+│   ├── geocode_businesses.py     # Batch geocoding utility
+│   └── inspect_map.py            # Map inspection tool
+│
+├── tests/                        # Test files
+│   ├── test_geocoding_integration.py
+│   ├── test_map_comprehensive.py
+│   └── test_map_load.py
+│
 ├── requirements.txt              # Python dependencies
-├── render.yaml                   # Render deployment config
-├── .gitignore                    # Git exclusions
+├── render.yaml                   # Render platform configuration
+├── .env.example                  # Environment variables template
+├── .gitignore                    # Git exclusion rules
 └── README.md                     # This file
 ```
 
-## 🔑 Key Features Explained
+## Technology Stack
 
-### Validation Alerts System
-- Errors appear at **bottom center** of page (always visible!)
-- Real-time field validation with character counters
-- 10-500 character minimum/maximum for reviews
-- CAPTCHA verification (math-based questions)
-- Auto-dismisses after 10 seconds or click close button
+| Component | Technology |
+|-----------|------------|
+| **Backend** | Flask 3.1.3 |
+| **Database** | SQLite |
+| **Frontend** | HTML5, CSS3, Vanilla JavaScript |
+| **Maps** | Google Maps JavaScript API |
+| **Email** | SendGrid API (100 free emails/day) |
+| **AI Chatbot** | Groq API (free, ultra-fast LLM) |
+| **Deployment** | Render.com (free tier) |
+| **APIs** | Yelp Business, Google Geocoding |
 
-### Review Submission
-- Two methods: Modal popup (trending/recommendations) + Form (business details)
-- Instant client-side validation before submission
-- Server-side validation enforcement
-- CAPTCHA spam protection
-- Character counter: Shows "X / 500 characters" in real-time
+## Configuration
 
-### Database
-- SQLite for local persistent storage
-- 8 main tables: users, businesses, reviews, favorites, deals, verification_codes, preferences, businesses_attributes
-- 167 sample businesses pre-loaded
-- Automatic schema creation on first run
+### Environment Variables
 
-### AI Chatbot
-- Claude integration via Groq API (free)
-- Fallback to Hugging Face API
-- Rule-based responses if no API available
-- Conversation history management
-- Rate limiting: 20 messages per session
-
-## ⚙️ Configuration
-
-### Environment Variables (.env)
-
-Create a `.env` file in project root:
+Create a `.env` file in the project root (copy from `.env.example`):
 
 ```env
 # Flask Configuration
 FLASK_ENV=production
 FLASK_DEBUG=False
-SECRET_KEY=generate-random-string-with-secrets.token_urlsafe()
+SECRET_KEY=your-secret-key-here
 PORT=5001
 
-# Email Configuration (optional - for verification & password reset)
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-app-specific-password
-SENDER_EMAIL=noreply@hidden-gems.io
+# Email (SendGrid) - Optional
+SENDGRID_API_KEY=SG.your-api-key
+FROM_EMAIL=your-email@domain.com
 
-# AI Chatbot (optional - for recommendations)
-GROQ_API_KEY=your-groq-free-api-key
-HUGGING_FACE_API_KEY=your-huggingface-api-key
+# AI Chatbot (Groq) - Optional but recommended
+GROQ_API_KEY=gsk_your-groq-api-key
 
-# Maps (optional - for interactive map feature)
-GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+# Google Maps - Optional
+GOOGLE_MAPS_API_KEY=your-google-maps-key
 
-# Yelp (optional - for business data)
+# Yelp API - Optional
 YELP_API_KEY=your-yelp-api-key
+
+# HuggingFace - Optional
+HUGGINGFACE_API_KEY=your-hf-api-key
 ```
 
-> ⚠️ **Important**: Never commit `.env` to Git! Already in `.gitignore`
+**Note:** The application works without these optional API keys - everything except email and AI chatbot will function normally.
 
-### Generate SECRET_KEY
+### Generating SECRET_KEY
 
 ```python
 from secrets import token_urlsafe
 print(token_urlsafe(32))
 ```
 
-## 🌐 Deployment to PythonAnywhere (Free + Email Support)
+## Deployment
 
-PythonAnywhere supports SMTP email and is perfect for this Flask app.
+### Deploy to Render (Recommended - Free)
 
-### Step-by-Step:
+1. Connect your GitHub repository to Render
+2. Create a new Web Service
+3. Select Python 3.10
+4. Set build command: `pip install -r requirements.txt`
+5. Set start command: `python -m web.app`
+6. Add environment variables in Render dashboard
+7. Deploy
 
-1. **Sign Up** - https://www.pythonanywhere.com (free account: 512 MB storage)
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions.
 
-2. **Upload Code**
-   ```bash
-   # In PythonAnywhere Bash console:
-   cd /home/yourusername
-   git clone https://github.com/[YOUR-USERNAME]/hidden-gems-fbla-2026.git
-   ```
+## Features Explained
 
-3. **Create Virtual Environment**
-   ```bash
-   cd hidden-gems-fbla-2026-main
-   mkvirtualenv --python=/usr/bin/python3.10 hidden-gems
-   pip install -r requirements.txt
-   ```
+### AI Chatbot
 
-4. **Create Web App**
-   - Go to **Web** tab → **Add a new web app**
-   - Choose **Manual configuration** → **Python 3.10**
+The app uses Groq's Llama 3.1 8B Instant model for ultra-fast business recommendations. The chatbot:
+- Provides personalized suggestions based on user preferences
+- Maintains conversation history for context
+- Falls back to rule-based responses if API unavailable
+- Optimized for sub-second response times
 
-5. **Configure WSGI File**
-   Edit the WSGI config file shown with:
-   ```python
-   import sys
-   import os
-   
-   path = '/home/yourusername/hidden-gems-fbla-2026-main'
-   if path not in sys.path:
-       sys.path.insert(0, path)
-   
-   os.chdir(path)
-   from web.app import app as application
-   ```
+**API Priority**: Cohere → Groq → HuggingFace → Rule-based
 
-6. **Set Environment Variables**
-   - In Web tab → **Environment variables**:
-   ```
-   FLASK_DEBUG=false
-   PORT=5001
-   SECRET_KEY=[your-generated-key]
-   ```
+### Review System
 
-7. **Reload Web App**
-   - Click  **Reload** 
-   - Your site: `yourusername.pythonanywhere.com`
+- Minimum 10 characters, maximum 500 characters
+- 1-5 star rating required
+- CAPTCHA math question for spam prevention
+- Real-time client-side validation
+- Server-side validation enforcement
 
-## 📝 Common Routes
+### Database
 
-| Method | Route | Purpose |
-|--------|-------|---------|
-| GET | `/` | Home page (featured & trending) |
-| GET | `/directory` | Business directory with search/filter |
-| GET | `/business/<id>` | Business details & reviews |
-| GET | `/map` | Interactive map view |
-| GET | `/trending` | Trending businesses |
-| GET | `/recommendations` | AI recommendations |
-| GET | `/favorites` | Saved businesses |
-| POST | `/register` | Create account |
-| POST | `/login` | User authentication |
-| GET | `/logout` | End session |
-| POST | `/business/<id>/review` | Submit review |
-| POST | `/submit-review` | Submit review (JSON) |
-| POST | `/get-captcha` | Get CAPTCHA question |
+- **Engine**: SQLite3
+- **Tables**: users, businesses, reviews, favorites, deals, verification_codes, preferences, businesses_attributes
+- **Pre-loaded**: 167 sample businesses across 5 categories
+- **Schema**: Auto-created on first run
 
-## 🧪 Testing
+## Common Routes
 
-### Manual Testing
-1. Register new account
-2. Verify email (use code shown in app or check email)
-3. Browse business directory
-4. Try viewing business details
-5. Submit review with invalid input → see validation alert at bottom!
-6. Submit valid review (10+ chars, rating, CAPTCHA answer)
-7. Check favorites system
-8. Try chatbot (if API configured)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/` | GET | Home page with featured businesses |
+| `/directory` | GET | Browse and search all businesses |
+| `/business/<id>` | GET | View business details and reviews |
+| `/map` | GET | Interactive map view |
+| `/trending` | GET | Trending businesses |
+| `/recommendations` | GET | AI recommendations |
+| `/favorites` | GET | Your saved businesses |
+| `/register` | POST | Create new account |
+| `/login` | POST | User authentication |
+| `/logout` | GET | End session |
+| `/business/<id>/review` | POST | Submit review |
 
-### Test Accounts (pre-populated)
-- Email: test@example.com
-- Email: demo@example.com
-- (Check database seed for more)
+## Security
 
-## 🔒 Security Considerations
-
-✅ **Implemented:**
+**Implemented Protections:**
 - SHA-256 password hashing with salt
-- Parameterized database queries (prevents SQL injection)
+- Parameterized SQL queries (SQL injection prevention)
 - Email verification before account activation
 - Session-based authentication
-- Password reset via email tokens (1-hour expiry)
-- CAPTCHA on reviews
+- Password reset tokens with expiration
+- CAPTCHA on review submissions
 - CSRF protection via Flask sessions
 
-⚠️ **For Production:**
-- Generate new `SECRET_KEY` (don't use default!)
-- Use HTTPS/TLS encryption
-- Consider bcrypt instead of SHA-256 for passwords
+**Production Recommendations:**
+- Generate unique `SECRET_KEY` for your deployment
+- Use HTTPS/TLS for all connections
+- Consider bcrypt for password hashing
 - Implement rate limiting on API endpoints
-- Configure CORS for trusted domains only
-- Use environment-specific configs
-- Regularly update dependencies
+- Configure CORS policies
+- Keep dependencies updated
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Port Already in Use
 ```bash
-# Find and kill process on port 5001
-lsof -i :5001
-kill -9 [PID]
-
-# Or use different port
-PORT=5002 python3 -m web.app
+lsof -i :5001  # Find process
+kill -9 [PID]  # Kill it
 ```
 
 ### Database Errors
 ```bash
-# Reseed database
 rm hidden_gems.db
 python3 -m web.app  # Recreates on startup
 ```
 
 ### Email Not Sending
-1. Check `.env` credentials
-2. For Gmail: Use App Passwords (not regular password)
-3. Allow less secure apps if needed
-4. Check ISP doesn't block port 587
+- Verify `SENDGRID_API_KEY` in environment variables
+- Check that sender email is verified in SendGrid dashboard
+- App will show verification code on-screen if email fails
+
+### Chatbot Not Responding
+- Check `GROQ_API_KEY` is set correctly
+- Verify API key is active on groq.com
+- Check internet connectivity
+- Review will suggest businesses even without AI
 
 ### JavaScript/Validation Alerts Not Working
-1. Clear browser cache (Cmd+Shift+R or Ctrl+Shift+R)
-2. Check browser console (F12) for errors
-3. Verify CSS & JS files load in Network tab
+1. Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
+2. Open Developer Console (F12) to check for errors
+3. Verify CSS and JS files load in Network tab
 4. Try different browser to isolate issue
 
-###  Reviews Submission Failing
-- Need at least 10 characters in review text
-- Need 1-5 star rating selected
-- Need to answer CAPTCHA question with number
-- Check validation alert at bottom of page for specific error
+## Documentation
 
-## 📚 Documentation
+- [Architecture Overview](docs/ARCHITECTURE.md) - System design and component details
+- [Database Design](docs/DATABASE.md) - Schema, relationships, and queries
+- [Quick Reference](docs/QUICK_REFERENCE.md) - Fast setup checklist
+- [Deployment Guide](docs/DEPLOYMENT.md) - Render deployment steps
+- [Chatbot Setup](docs/CHATBOT_SETUP.md) - Complete chatbot configuration
+- [Email Configuration](docs/EMAIL_SETUP.md) - SendGrid setup guide
+- [Google Maps Integration](docs/GOOGLE_MAPS_SETUP.md) - Maps configuration
 
-- [Quick Reference](docs/QUICK_REFERENCE.md) - Fast setup guide
-- [Database Design](docs/DATABASE.md) - Schema & relationships
-- [System Architecture](docs/ARCHITECTURE.md) - Component overview
-- [Chatbot Setup](docs/CHATBOT_SETUP.md) - LLM configuration
-- [Email Setup](docs/EMAIL_SETUP.md) - SMTP configuration
-- [Google Maps Setup](GOOGLE_MAPS_SETUP.md) - Map integration
+## Testing
 
-## 📋 File Naming Standards
+### Manual Testing Workflow
+1. Register a new account
+2. Verify email (code shown in app or check SendGrid)
+3. Browse businesses and search
+4. View business details and existing reviews
+5. Submit a review (test validation with short text first)
+6. Try the chatbot for recommendations
+7. Test favorites - save and retrieve businesses
+8. Check profile and settings pages
 
-- **Python modules**: `naming_like_this.py` (snake_case)
-- **Database tables**: `plural_names` (users, businesses, reviews)
-- **Database columns**: `snake_case_names`
-- **HTML templates**: `noun.html` (business.html, home.html)
-- **CSS files**: `feature-name.css` (features.css, validation-alerts.css)
-- **JavaScript files**: `feature-name.js` (features.js, chat.js)
-- **Folders**: `lowercase_plural` (src, web, docs, static, templates)
+### Sample Data
+Pre-loaded database includes:
+- 5 categories: Food, Retail, Services, Entertainment, Health
+- 167 sample businesses across Richmond, VA
+- Multi-word search compatible
+- Geographic coordinates for map display
 
-## 🤝 Contributing
+## API Keys & Services
 
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m "Add amazing feature"`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open Pull Request
+**Free Tiers Used:**
+- **Groq**: Free tier with no credit card required
+- **SendGrid**: 100 emails/day free forever
+- **Google Maps**: Free tier
+- **HuggingFace**: Free inference API
 
-## 📄 License
+## Performance Optimizations
 
-This project is created for FBLA 2026 competition.
+- Llama 3.1 8B Instant model for sub-second responses
+- Minimal context window for fast generation
+- Client-side form validation before server processing
+- SQLite indexes on frequently queried columns
+- Static file minification ready
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m "Add amazing feature"`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Code Style
+
+- **Python**: PEP 8 (snake_case for functions/variables, PascalCase for classes)
+- **HTML**: Indented 4 spaces, semantic HTML5
+- **CSS**: Mobile-first responsive design
+- **JavaScript**: Vanilla JS, camelCase,descriptive naming
+
+## License
+
+Created for FBLA 2026 competition.
+
+## Support
+
+For issues, questions, or suggestions:
+1. Check [Troubleshooting](#troubleshooting) section
+2. Review documentation in `/docs` folder
+3. Open a GitHub issue with detailed description
 
 ---
 
-**Built with ❤️ for FBLA 2026**
+Last Updated: February 2026
