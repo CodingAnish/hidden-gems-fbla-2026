@@ -418,34 +418,43 @@ def chat_with_ai(messages, user_message):
     # Get API keys
     groq_key, hf_key, cohere_key = get_api_keys()
     
+    # DEBUG: Log which keys are available
+    print(f"[DEBUG] API Keys available - Cohere: {bool(cohere_key)}, Groq: {bool(groq_key)}, HF: {bool(hf_key)}")
+    
     # Try Cohere first (MOST RELIABLE - fast, no cold starts)
     if cohere_key:
         try:
             response_text = call_cohere_api(messages, user_message, system_prompt, cohere_key)
             quick_actions = get_quick_actions(intent)
+            print(f"[DEBUG] Successfully used Cohere API")
             return (response_text, intent, quick_actions)
         except Exception as e:
-            print(f"Cohere API error: {e}")
+            print(f"[ERROR] Cohere API failed: {e}")
     
     # Try Groq second (fast and free)
     if groq_key:
         try:
             response_text = call_groq_api(messages, user_message, system_prompt, groq_key)
             quick_actions = get_quick_actions(intent)
+            print(f"[DEBUG] Successfully used Groq API")
             return (response_text, intent, quick_actions)
         except Exception as e:
-            print(f"Groq API error: {e}")
+            print(f"[ERROR] Groq API failed: {e}")
+    else:
+        print(f"[DEBUG] GROQ_API_KEY is not set or empty!")
     
     # Try Hugging Face as backup
     if hf_key:
         try:
             response_text = call_huggingface_api(messages, user_message, system_prompt, hf_key)
             quick_actions = get_quick_actions(intent)
+            print(f"[DEBUG] Successfully used HuggingFace API")
             return (response_text, intent, quick_actions)
         except Exception as e:
-            print(f"Hugging Face API error: {e}")
+            print(f"[ERROR] HuggingFace API failed: {e}")
     
     # Fallback to rule-based (always works, no API needed)
+    print(f"[DEBUG] Falling back to rule-based response")
     response_text, quick_actions = rule_based_response(user_message)
     return (response_text, intent, quick_actions)
 
