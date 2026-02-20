@@ -392,11 +392,27 @@ def favorites():
     user = current_user()
     if not user:
         return redirect(url_for("login"))
-    favorite_businesses = queries.get_favorite_businesses(user["id"]) or []
     
-    # Add deals to each business
-    for business in favorite_businesses:
-        business["deals"] = queries.get_deals_by_business(business["id"])
+    try:
+        favorite_businesses = queries.get_favorite_businesses(user["id"]) or []
+        
+        # Process businesses and add deals
+        processed_businesses = []
+        for business in favorite_businesses:
+            # Ensure business is a dict
+            if not isinstance(business, dict):
+                business = dict(business)
+            
+            # Add deals safely
+            deals = queries.get_deals_by_business(business.get("id")) or []
+            business["deals"] = deals
+            processed_businesses.append(business)
+        
+        favorite_businesses = processed_businesses
+    except Exception as e:
+        # Log error and show empty favorites
+        print(f"Error loading favorites: {str(e)}")
+        favorite_businesses = []
     
     # Pagination: 12 items per page
     items_per_page = 12
