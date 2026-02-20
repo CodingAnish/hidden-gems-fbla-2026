@@ -28,8 +28,8 @@ def hash_password(password):
     """
     if not password:
         return ""
-    password_hash = hashlib.sha256(PASSWORD_SALT + password.encode("utf-8"))
-    return password_hash.hexdigest()
+    digest = hashlib.sha256(PASSWORD_SALT + password.encode("utf-8"))
+    return digest.hexdigest()
 
 
 def is_valid_email(email):
@@ -45,10 +45,10 @@ def is_valid_email(email):
     if not email or not isinstance(email, str):
         return False
     
-    email = email.strip().lower()
+    email_address = email.strip().lower()
     # RFC 5322 simplified pattern for basic validation
     email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    return bool(re.match(email_pattern, email))
+    return bool(re.match(email_pattern, email_address))
 
 
 def is_valid_username(username):
@@ -64,14 +64,14 @@ def is_valid_username(username):
     if not username or not isinstance(username, str):
         return False
     
-    username = username.strip()
+    username_value = username.strip()
     
     # Check length requirements
-    if len(username) < 3 or len(username) > 30:
+    if len(username_value) < 3 or len(username_value) > 30:
         return False
     
     # Check character restrictions (letters, numbers, underscore only)
-    return all(c.isalnum() or c == "_" for c in username)
+    return all(char.isalnum() or char == "_" for char in username_value)
 
 
 def is_valid_password(password):
@@ -139,7 +139,8 @@ def validate_login(identifier, password):
         return False, "Password is required."
     
     # Look up user by email or username
-    user = queries.user_by_email_or_username(identifier)
+    login_identifier = str(identifier).strip()
+    user = queries.user_by_email_or_username(login_identifier)
     if not user:
         return False, "No account found with that email or username."
     

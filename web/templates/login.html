@@ -38,12 +38,12 @@
 
       <!-- SUBMIT BUTTON - Sign in button that submits form -->
       <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: 600; margin-top: 0.5rem;">Sign in</button>
+    </form>
       
       <!-- FORGOT PASSWORD LINK - Directs user to password recovery page -->
-      <div style="text-align: center;">
+      <div style="text-align: center; margin-top: 1.5rem;">
         <a href="{{ url_for('forgot_password') }}" style="color: var(--color-text); text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: color var(--transition-base);" onmouseover="this.style.color='#555'" onmouseout="this.style.color='var(--color-text)'">Forgot your password?</a>
       </div>
-    </form>
 
     <!-- DIVIDER - Visual separator between login and signup sections -->
     <!-- Uses horizontal lines with centered text "New here?" -->

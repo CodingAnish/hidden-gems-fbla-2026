@@ -35,17 +35,17 @@ def _sync_richmond_from_yelp():
         return 0, 0
     if not is_configured():
         return 0, 0
-    rows = fetch_richmond_businesses(max_per_category=50)
+    business_rows = fetch_richmond_businesses(max_per_category=50)
     # When we have Yelp data, remove static seed businesses so only real Richmond businesses show
-    if rows:
+    if business_rows:
         _remove_static_seed_businesses()
     added = 0
     updated = 0
-    for row in rows:
-        bid = queries.get_business_id_by_name(row["name"])
-        if bid:
+    for row in business_rows:
+        business_id = queries.get_business_id_by_name(row["name"])
+        if business_id:
             queries.update_business(
-                bid,
+                business_id,
                 category=row.get("category"),
                 description=row.get("description"),
                 address=row.get("address"),
@@ -106,9 +106,9 @@ def ensure_seed_data():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM businesses")
-    count = cur.fetchone()[0]
+    business_count = cur.fetchone()[0]
     conn.close()
-    if count == 0:
+    if business_count == 0:
         # Fallback: static seed when Yelp not configured or returned nothing
         _seed_static_businesses()
 
@@ -137,17 +137,17 @@ def _seed_static_businesses():
     conn.commit()
     # Add some deals
     cur.execute("SELECT id FROM businesses WHERE name = 'Mama''s Kitchen'")
-    bid = cur.fetchone()[0]
-    cur.execute("INSERT INTO deals (business_id, description) VALUES (?, ?)", (bid, "10% off lunch Monday–Friday"))
+    business_id = cur.fetchone()[0]
+    cur.execute("INSERT INTO deals (business_id, description) VALUES (?, ?)", (business_id, "10% off lunch Monday–Friday"))
     cur.execute("SELECT id FROM businesses WHERE name = 'Tech Fix Pro'")
-    bid = cur.fetchone()[0]
-    cur.execute("INSERT INTO deals (business_id, description) VALUES (?, ?)", (bid, "Free diagnostic on first visit"))
+    business_id = cur.fetchone()[0]
+    cur.execute("INSERT INTO deals (business_id, description) VALUES (?, ?)", (business_id, "Free diagnostic on first visit"))
     cur.execute("SELECT id FROM businesses WHERE name = 'Green Leaf Cafe'")
-    bid = cur.fetchone()[0]
-    cur.execute("INSERT INTO deals (business_id, description) VALUES (?, ?)", (bid, "Buy 2 coffees, get 1 free"))
+    business_id = cur.fetchone()[0]
+    cur.execute("INSERT INTO deals (business_id, description) VALUES (?, ?)", (business_id, "Buy 2 coffees, get 1 free"))
     cur.execute("SELECT id FROM businesses WHERE name = 'Joe''s Pizza'")
-    bid = cur.fetchone()[0]
-    cur.execute("INSERT INTO deals (business_id, description) VALUES (?, ?)", (bid, "Large pizza for the price of medium on Tuesdays"))
+    business_id = cur.fetchone()[0]
+    cur.execute("INSERT INTO deals (business_id, description) VALUES (?, ?)", (business_id, "Large pizza for the price of medium on Tuesdays"))
     conn.commit()
     conn.close()
 
@@ -169,10 +169,10 @@ def replace_all_with_yelp():
         return 0, "Yelp module not found"
     if not is_configured():
         return 0, "YELP_API_KEY not set in config.py"
-    rows = fetch_richmond_businesses(max_per_category=50)
-    err = get_last_error()
-    if not rows:
-        return 0, (err or "Yelp returned no businesses. Check your API key and internet.")
+    business_rows = fetch_richmond_businesses(max_per_category=50)
+    error_message = get_last_error()
+    if not business_rows:
+        return 0, (error_message or "Yelp returned no businesses. Check your API key and internet.")
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("DELETE FROM deals")
@@ -181,7 +181,7 @@ def replace_all_with_yelp():
     cur.execute("DELETE FROM businesses")
     conn.commit()
     conn.close()
-    for row in rows:
+    for row in business_rows:
         queries.insert_business(
             name=row["name"],
             category=row["category"],
@@ -190,4 +190,4 @@ def replace_all_with_yelp():
             total_reviews=row["total_reviews"],
             address=row.get("address"),
         )
-    return len(rows), None
+    return len(business_rows), None

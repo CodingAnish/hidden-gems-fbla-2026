@@ -1,1 +1,1 @@
-# Database package
+"""Database access package."""

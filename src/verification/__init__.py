@@ -1,1 +1,1 @@
-# Verification package
+"""Verification and anti-bot helpers."""

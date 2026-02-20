@@ -1,1 +1,1 @@
-# Hidden Gems web app (Flask)
+"""Flask web app package."""

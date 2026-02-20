@@ -48,6 +48,19 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24-hour session timeout
 
 
+# Register custom Jinja2 filters
+@app.template_filter('from_json')
+def from_json_filter(value):
+    """Convert a JSON string to a Python dictionary in templates."""
+    import json
+    if not value:
+        return {}
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return {}
+
+
 def current_user():
     """
     Retrieve the currently logged-in user from the session.
@@ -138,15 +151,15 @@ def login():
     if request.method == "POST":
         identifier = request.form.get("identifier", "").strip()
         password = request.form.get("password", "")
-        ok, result = validate_login(identifier, password)
-        if ok:
+        login_success, login_result = validate_login(identifier, password)
+        if login_success:
             session.permanent = True
-            session["user_id"] = result["id"]
-            session["email"] = result["email"]
-            session["username"] = result.get("username") or result["email"]
+            session["user_id"] = login_result["id"]
+            session["email"] = login_result["email"]
+            session["username"] = login_result.get("username") or login_result["email"]
             return redirect(url_for("directory"))
         # Handle email not verified
-        if result == "EMAIL_NOT_VERIFIED":
+        if login_result == "EMAIL_NOT_VERIFIED":
             # Find user to get their email for resending code
             user = queries.user_by_email_or_username(identifier)
             if user:
@@ -154,7 +167,7 @@ def login():
                 session["pending_verification_id"] = user["id"]
                 flash("Please verify your email address first. Check your inbox for the verification code.", "warning")
                 return redirect(url_for("verify"))
-        flash(result if isinstance(result, str) else "Login failed.", "error")
+        flash(login_result if isinstance(login_result, str) else "Login failed.", "error")
     return render_template("login.html", user=None)
 
 
@@ -178,9 +191,9 @@ def register():
             if not valid_pwd:
                 flash(pwd_error, "error")
             else:
-                ok, out = register_user(username, email, password)
-                if ok:
-                    user_id = out
+                register_success, register_result = register_user(username, email, password)
+                if register_success:
+                    user_id = register_result
                     # Generate and send verification code
                     code = generate_verification_code()
                     queries.create_email_verification_code(user_id, code)
@@ -204,7 +217,7 @@ def register():
                     
                     return redirect(url_for("verify"))
                 else:
-                    flash(out, "error")
+                    flash(register_result, "error")
     return render_template("register.html", user=None)
 
 
@@ -212,6 +225,7 @@ def register():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
 
 
 @app.route("/verify", methods=["GET", "POST"])
@@ -302,21 +316,21 @@ def directory():
     
     # Get category and sort from query params (these override saved preferences)
     # If no query param, use saved preference
-    cat = request.args.get("category")
-    if cat is None:
+    category_filter = request.args.get("category")
+    if category_filter is None:
         # Use first favorite category if available, otherwise "All"
-        cat = saved_favorite_categories[0] if saved_favorite_categories else "All"
+        category_filter = saved_favorite_categories[0] if saved_favorite_categories else "All"
     
     sort_by = request.args.get("sort", saved_sort)
     search = request.args.get("q", "").strip()
     
     if search:
         all_businesses = queries.search_businesses_by_name(search)
-        if cat and cat != "All":
-            all_businesses = [b for b in all_businesses if b.get("category") == cat]
+        if category_filter and category_filter != "All":
+            all_businesses = [b for b in all_businesses if b.get("category") == category_filter]
     else:
-        cat = None if cat == "All" else cat
-        all_businesses = queries.get_businesses_for_directory(category=cat, sort_by=sort_by)
+        category_filter = None if category_filter == "All" else category_filter
+        all_businesses = queries.get_businesses_for_directory(category_filter=category_filter, sort_by_option=sort_by)
     
     # Pagination: 12 items per page (4 rows × 3 columns)
     items_per_page = 12
@@ -342,7 +356,7 @@ def directory():
     categories = ["All", "Food", "Retail", "Services", "Entertainment", "Health and Wellness"]
     
     # Pass selected category and sort to template for display
-    selected_cat = cat if cat else "All"
+    selected_cat = category_filter if category_filter else "All"
     return render_template(
         "directory.html", 
         user=user, 
@@ -362,15 +376,15 @@ def business_detail(business_id):
     user = current_user()
     if not user:
         return redirect(url_for("login"))
-    b = queries.get_business_by_id(business_id)
-    if not b:
+    business = queries.get_business_by_id(business_id)
+    if not business:
         flash("Business not found.", "error")
         return redirect(url_for("directory"))
     deals = queries.get_deals_by_business(business_id)
     reviews = queries.get_reviews_for_business(business_id)
     fav_ids = set(queries.get_favorite_business_ids(user["id"]))
     is_fav = business_id in fav_ids
-    return render_template("business.html", user=user, business=b, deals=deals, reviews=reviews, is_fav=is_fav)
+    return render_template("business.html", user=user, business=business, deals=deals, reviews=reviews, is_fav=is_fav)
 
 
 @app.route("/favorites")
@@ -378,7 +392,7 @@ def favorites():
     user = current_user()
     if not user:
         return redirect(url_for("login"))
-    all_businesses = queries.get_favorite_businesses(user["id"])
+    favorite_businesses = queries.get_favorite_businesses(user["id"])
     
     # Pagination: 12 items per page
     items_per_page = 12
@@ -389,7 +403,7 @@ def favorites():
     except ValueError:
         page = 1
     
-    total_businesses = len(all_businesses)
+    total_businesses = len(favorite_businesses)
     total_pages = (total_businesses + items_per_page - 1) // items_per_page
     
     if page > total_pages and total_pages > 0:
@@ -397,7 +411,7 @@ def favorites():
     
     start_idx = (page - 1) * items_per_page
     end_idx = start_idx + items_per_page
-    businesses = all_businesses[start_idx:end_idx]
+    businesses = favorite_businesses[start_idx:end_idx]
     
     return render_template("favorites.html", user=user, businesses=businesses, page=page, total_pages=total_pages, total_businesses=total_businesses)
 
@@ -409,6 +423,31 @@ def deals():
         return redirect(url_for("login"))
     deals_list = queries.get_all_deals()
     return render_template("deals.html", user=user, deals=deals_list)
+
+
+@app.route("/map")
+def map_view():
+    user = current_user()
+    if not user:
+        return redirect(url_for("login"))
+    
+    # Get all businesses for map display
+    # Note: Client-side JavaScript will geocode addresses to get coordinates
+    all_businesses = queries.get_all_businesses()
+    
+    # Get Google Maps API key from config
+    try:
+        from config import GOOGLE_MAPS_API_KEY
+    except ImportError:
+        GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+    
+    return render_template(
+        "map.html", 
+        user=user, 
+        businesses=all_businesses,
+        google_maps_api_key=GOOGLE_MAPS_API_KEY,
+        categories=sorted(set([b.get("category", "Other") for b in all_businesses if b.get("category")]))
+    )
 
 
 @app.route("/trending")
@@ -739,18 +778,72 @@ def business_review(business_id):
     user = current_user()
     if not user:
         return redirect(url_for("login"))
+    
     rating = request.form.get("rating", "5")
+    text = (request.form.get("review_text") or "").strip()
+    captcha_answer = request.form.get("captcha_answer", "")
+    
+    # Validate business exists
+    business = queries.get_business_by_id(business_id)
+    if not business:
+        flash("Business not found.", "error")
+        return redirect(url_for("directory"))
+    
+    # Validation errors
+    errors = []
+    
+    # Validate rating
     try:
         rating = max(1, min(5, int(rating)))
     except ValueError:
+        errors.append("Invalid rating. Please select a rating between 1 and 5.")
         rating = 5
-    text = (request.form.get("review_text") or "").strip()
+    
+    # Validate review text
     if not text:
-        flash("Please enter your review text.", "error")
+        errors.append("Please enter your review text.")
+    elif len(text) < 10:
+        errors.append("Review must be at least 10 characters long.")
+    elif len(text) > 500:
+        errors.append("Review must be less than 500 characters.")
+    
+    # Verify CAPTCHA
+    stored_answer = session.get('captcha_answer')
+    if not stored_answer:
+        errors.append("CAPTCHA session expired. Please refresh the page and try again.")
+    else:
+        try:
+            if int(captcha_answer) != stored_answer:
+                errors.append("Incorrect answer to verification question.")
+        except (ValueError, TypeError):
+            errors.append("Please answer the verification question.")
+    
+    # If errors, flash them and redirect back
+    if errors:
+        for error in errors:
+            flash(error, "error")
         return redirect(url_for("business_detail", business_id=business_id))
-    now = datetime.now()
-    queries.add_review(business_id, user["id"], rating, text, now.strftime("%Y-%m-%d"), now.strftime("%H:%M"))
-    flash("Thanks! Your review was posted.", "success")
+    
+    # All validation passed - add review
+    try:
+        now = datetime.now()
+        queries.add_review(
+            business_id, 
+            user["id"], 
+            rating, 
+            text, 
+            now.strftime("%Y-%m-%d"), 
+            now.strftime("%H:%M")
+        )
+        
+        # Clear CAPTCHA after successful use
+        session.pop('captcha_answer', None)
+        session.modified = True
+        
+        flash("Thanks! Your review was posted.", "success")
+    except Exception as e:
+        flash("Error posting review. Please try again.", "error")
+    
     return redirect(url_for("business_detail", business_id=business_id))
 
 
@@ -810,16 +903,16 @@ def get_captcha():
         return jsonify({"error": "Not authenticated"}), 401
     
     # Generate simple math problem
-    num1 = random.randint(1, 20)
-    num2 = random.randint(1, 20)
-    operation = random.choice(['+', '-'])
+    left_operand = random.randint(1, 20)
+    right_operand = random.randint(1, 20)
+    operator = random.choice(['+', '-'])
     
-    if operation == '+':
-        answer = num1 + num2
-        question = f"What is {num1} + {num2}?"
+    if operator == '+':
+        answer = left_operand + right_operand
+        question = f"What is {left_operand} + {right_operand}?"
     else:
-        answer = num1 - num2
-        question = f"What is {num1} - {num2}?"
+        answer = left_operand - right_operand
+        question = f"What is {left_operand} - {right_operand}?"
     
     # Store answer in session (expires when session expires)
     session['captcha_answer'] = answer
@@ -840,7 +933,7 @@ def submit_review():
     
     data = request.get_json()
     business_id = data.get("business_id")
-    user_name = data.get("user_name", "").strip()
+    reviewer_name = data.get("user_name", "").strip()
     rating = data.get("rating")
     comment = data.get("comment", "").strip()
     captcha_answer = data.get("captcha_answer")
@@ -851,9 +944,9 @@ def submit_review():
     if not business_id:
         errors.append("Business ID is required")
     
-    if not user_name or len(user_name) < 2:
+    if not reviewer_name or len(reviewer_name) < 2:
         errors.append("Name must be at least 2 characters")
-    elif len(user_name) > 50:
+    elif len(reviewer_name) > 50:
         errors.append("Name must be less than 50 characters")
     
     if not rating:
@@ -910,7 +1003,7 @@ def submit_review():
             "review": {
                 "rating": rating,
                 "comment": comment,
-                "user_name": user_name,
+                "user_name": reviewer_name,
                 "date": now.strftime("%Y-%m-%d")
             }
         }), 201
@@ -994,8 +1087,8 @@ def api_favorites():
             return jsonify({"error": "Business not found"}), 404
         
         try:
-            fav_ids = set(queries.get_favorite_business_ids(user["id"]) or [])
-            is_favorited = business_id in fav_ids
+            favorite_ids = set(queries.get_favorite_business_ids(user["id"]) or [])
+            is_favorited = business_id in favorite_ids
             
             if action == "add" or (action == "toggle" and not is_favorited):
                 queries.add_favorite(user["id"], business_id)

@@ -134,14 +134,14 @@ def init_db():
         )
     """)
     cursor.execute("PRAGMA table_info(businesses)")
-    bcols = [row[1] for row in cursor.fetchall()]
+    business_columns = [row[1] for row in cursor.fetchall()]
     
     # Add missing columns if they don't exist
-    if "address" not in bcols:
+    if "address" not in business_columns:
         cursor.execute("ALTER TABLE businesses ADD COLUMN address TEXT")
         connection.commit()
     
-    new_cols = {
+    new_columns = {
         "phone": "TEXT",
         "website": "TEXT",
         "yelp_url": "TEXT",
@@ -154,8 +154,8 @@ def init_db():
         "summary": "TEXT",
         "yelp_id": "TEXT"
     }
-    for col_name, col_type in new_cols.items():
-        if col_name not in bcols:
+    for col_name, col_type in new_columns.items():
+        if col_name not in business_columns:
             cursor.execute(f"ALTER TABLE businesses ADD COLUMN {col_name} {col_type}")
             connection.commit()
 

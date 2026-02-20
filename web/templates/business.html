@@ -209,7 +209,7 @@
 
   <div style="padding: 2.5rem; background: linear-gradient(135deg, var(--color-bg-alt), var(--color-primary-light)); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
     <h3 style="margin: 0 0 2rem; font-size: 1.35rem; font-weight: 700; color: var(--color-text);"> Share Your Review</h3>
-    <form method="post" action="{{ url_for('business_review', business_id=business.id) }}">
+    <form method="post" action="{{ url_for('business_review', business_id=business.id) }}" id="business-review-form" onsubmit="return validateBusinessReview(event)">
       <div class="form-group">
         <label class="label" style="margin-bottom: 1rem; font-weight: 600;">Your Rating</label>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -227,7 +227,18 @@
 
       <div class="form-group" style="margin: 1.5rem 0;">
         <label class="label" style="margin-bottom: 1rem; font-weight: 600;">Your Review</label>
-        <textarea name="review_text" placeholder="Tell us about your experience..." required style="font-size: 1rem; padding: 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); min-height: 120px; width: 100%; font-family: inherit;"></textarea>
+        <textarea name="review_text" id="business-review-text" placeholder="Tell us about your experience..." required style="font-size: 1rem; padding: 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); min-height: 120px; width: 100%; font-family: inherit;"></textarea>
+        <div id="business-char-count" style="font-size: 0.9rem; color: var(--color-text-muted); margin-top: 0.5rem;">0 / 500 characters</div>
+      </div>
+
+      <!-- CAPTCHA VERIFICATION -->
+      <div class="form-group" id="captcha-section" style="margin: 1.5rem 0; padding: 1.5rem; background: rgba(255, 255, 255, 0.5); border-radius: var(--radius-md); border: 2px solid #fbbf24;">
+        <label class="label" style="margin-bottom: 1rem; font-weight: 600; color: #b45309;">🔒 Verification Question</label>
+        <p id="captcha-question" style="margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 600; color: var(--color-text);">Loading verification...</p>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <input type="number" name="captcha_answer" id="captcha_answer" placeholder="Your answer" required style="padding: 0.75rem 1rem; border: 2px solid var(--color-border); border-radius: 6px; font-size: 1rem; flex: 1;" />
+          <button type="button" id="refresh-captcha" onclick="loadCaptcha()" style="padding: 0.75rem 1.5rem; background: #fbbf24; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">🔄 New Question</button>
+        </div>
       </div>
 
       <button type="submit" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1rem;">Post Your Review</button>
@@ -286,6 +297,79 @@
           });
         });
       });
+      
+      /**
+       * Load CAPTCHA question from server
+       */
+      async function loadCaptcha() {
+        try {
+          const response = await fetch('/get-captcha', { method: 'GET' });
+          const data = await response.json();
+          
+          if (data.question) {
+            document.getElementById('captcha-question').textContent = data.question;
+            document.getElementById('captcha_answer').value = '';
+            document.getElementById('captcha_answer').focus();
+          } else if (data.error) {
+            document.getElementById('captcha-question').textContent = '⚠️ Error loading question';
+          }
+        } catch (error) {
+          console.error('Error loading CAPTCHA:', error);
+          document.getElementById('captcha-question').textContent = '⚠️ Error loading question';
+        }
+      }
+      
+      // Update character counter
+      document.getElementById('business-review-text').addEventListener('keyup', function() {
+        const count = this.value.length;
+        document.getElementById('business-char-count').textContent = `${count} / 500 characters`;
+      });
+      
+      /**
+       * Validate business detail review form before submission
+       */
+      function validateBusinessReview(event) {
+        const review_text = document.getElementById('business-review-text').value.trim();
+        const rating = document.getElementById('rating-input').value;
+        const captcha_answer = document.getElementById('captcha_answer').value.trim();
+        
+        const errors = [];
+        
+        // Validate review text
+        if (!review_text) {
+          errors.push('Review cannot be empty');
+        } else if (review_text.length < 10) {
+          errors.push(`Review must be at least 10 characters (currently ${review_text.length})`);
+        } else if (review_text.length > 500) {
+          errors.push('Review must be less than 500 characters');
+        }
+        
+        // Validate rating
+        if (!rating || rating < 1 || rating > 5) {
+          errors.push('Please select a star rating (1-5 stars)');
+        }
+        
+        // Validate captcha
+        if (!captcha_answer) {
+          errors.push('Please answer the verification question');
+        } else if (isNaN(captcha_answer)) {
+          errors.push('Verification answer must be a number');
+        }
+        
+        // If there are errors, show bottom alert and prevent submission
+        if (errors.length > 0) {
+          event.preventDefault();
+          // Use Validator.showErrors to display at bottom of page
+          Validator.showErrors(errors, 'dummy-container-not-used');
+          return false;
+        }
+        
+        // Allow form submission
+        return true;
+      }
+      
+      // Load CAPTCHA when page loads
+      window.addEventListener('DOMContentLoaded', loadCaptcha);
     </script>
   </div>
 </div>

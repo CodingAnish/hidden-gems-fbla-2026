@@ -30,10 +30,10 @@ def user_by_email(email_address):
         "SELECT id, email, password_hash, email_verified, username FROM users WHERE email = ?",
         (normalized_email,)
     )
-    row = cur.fetchone()
+    user_row = cur.fetchone()
     conn.close()
     # Convert SQLite Row object to dictionary for easier access
-    return dict(row) if row else None
+    return dict(user_row) if user_row else None
 
 
 def user_by_username(username_input):
@@ -62,10 +62,10 @@ def user_by_username(username_input):
         "SELECT id, email, password_hash, email_verified, username FROM users WHERE username = ?",
         (normalized_username,)
     )
-    row = cur.fetchone()
+    user_row = cur.fetchone()
     conn.close()
     # Convert SQLite Row object to dictionary
-    return dict(row) if row else None
+    return dict(user_row) if user_row else None
 
 
 def user_by_email_or_username(user_identifier):
@@ -96,10 +96,10 @@ def user_by_email_or_username(user_identifier):
         "SELECT id, email, password_hash, email_verified, username FROM users WHERE lower(email) = ? OR lower(username) = ?",
         (normalized_key, normalized_key)
     )
-    row = cur.fetchone()
+    user_row = cur.fetchone()
     conn.close()
     # Convert SQLite Row object to dictionary
-    return dict(row) if row else None
+    return dict(user_row) if user_row else None
 
 
 def get_user_by_id(user_id_value):
@@ -123,10 +123,10 @@ def get_user_by_id(user_id_value):
         "SELECT id, email, password_hash, email_verified, username FROM users WHERE id = ?",
         (user_id_value,)
     )
-    row = cur.fetchone()
+    user_row = cur.fetchone()
     conn.close()
     # Convert SQLite Row object to dictionary
-    return dict(row) if row else None
+    return dict(user_row) if user_row else None
 
 
 def create_user(username_new, email_new, password_hash_value):
@@ -303,9 +303,9 @@ def get_latest_verification_code(user_id):
         "SELECT code FROM email_verification_codes WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
         (user_id,)
     )
-    row = cur.fetchone()
+    verification_row = cur.fetchone()
     conn.close()
-    return row[0] if row else None
+    return verification_row[0] if verification_row else None
 
 
 def validate_email_code(user_id, code):
@@ -345,9 +345,9 @@ def get_all_verification_attempts():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT * FROM verification_attempts ORDER BY attempted_at DESC")
-    rows = cur.fetchall()
+    attempt_rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return [dict(r) for r in attempt_rows]
 
 
 # ===== BUSINESS LOOKUP & SEARCH =====
@@ -367,10 +367,10 @@ def get_all_businesses():
     cur = conn.cursor()
     # Query all businesses, sorted by name for consistent display
     cur.execute("SELECT * FROM businesses ORDER BY name")
-    rows = cur.fetchall()
+    business_rows = cur.fetchall()
     conn.close()
     # Convert SQLite Row objects to dictionaries
-    return [dict(business_row) for business_row in rows]
+    return [dict(business_row) for business_row in business_rows]
 
 
 def get_businesses_by_category(category_name):
@@ -393,10 +393,10 @@ def get_businesses_by_category(category_name):
         "SELECT * FROM businesses WHERE category = ? ORDER BY name",
         (category_name,)
     )
-    rows = cur.fetchall()
+    business_rows = cur.fetchall()
     conn.close()
     # Convert SQLite Row objects to dictionaries
-    return [dict(business_row) for business_row in rows]
+    return [dict(business_row) for business_row in business_rows]
 
 
 def get_businesses_for_directory(category_filter=None, sort_by_option="name"):
@@ -480,10 +480,10 @@ def get_business_by_id(business_id_to_fetch):
     cur = conn.cursor()
     # Query single business by primary key (fastest lookup)
     cur.execute("SELECT * FROM businesses WHERE id = ?", (business_id_to_fetch,))
-    row = cur.fetchone()
+    business_row = cur.fetchone()
     conn.close()
     # Convert SQLite Row object to dictionary
-    return dict(row) if row else None
+    return dict(business_row) if business_row else None
 
 
 def search_businesses_by_name(search_query):
@@ -511,10 +511,10 @@ def search_businesses_by_name(search_query):
         "SELECT * FROM businesses WHERE lower(name) LIKE ? ORDER BY name",
         ("%" + search_query.strip().lower() + "%",)  # Wildcards on both sides
     )
-    rows = cur.fetchall()
+    business_rows = cur.fetchall()
     conn.close()
     # Convert SQLite Row objects to dictionaries
-    return [dict(business_row) for business_row in rows]
+    return [dict(business_row) for business_row in business_rows]
 
 
 def get_categories():
@@ -532,10 +532,10 @@ def get_categories():
     cur = conn.cursor()
     # Query all unique categories from businesses table, sorted
     cur.execute("SELECT DISTINCT category FROM businesses ORDER BY category")
-    rows = cur.fetchall()
+    category_rows = cur.fetchall()
     conn.close()
     # Extract category name from each row tuple (only first column)
-    return [category_name[0] for category_name in rows]
+    return [category_name[0] for category_name in category_rows]
 
 
 def get_all_business_names():
@@ -565,8 +565,8 @@ def update_business(business_id, category=None, description=None, address=None, 
     conn = get_connection()
     cur = conn.cursor()
     # Build dynamic update
-    updates = []
-    args = []
+    update_clauses = []
+    parameters = []
     
     field_mapping = {
         'category': category,
@@ -589,14 +589,14 @@ def update_business(business_id, category=None, description=None, address=None, 
     
     for field, value in field_mapping.items():
         if value is not None:
-            updates.append(f"{field} = ?")
-            args.append(value)
+            update_clauses.append(f"{field} = ?")
+            parameters.append(value)
     
-    if not updates:
+    if not update_clauses:
         conn.close()
         return
-    args.append(business_id)
-    cur.execute("UPDATE businesses SET " + ", ".join(updates) + " WHERE id = ?", args)
+    parameters.append(business_id)
+    cur.execute("UPDATE businesses SET " + ", ".join(update_clauses) + " WHERE id = ?", parameters)
     conn.commit()
     conn.close()
 
@@ -614,9 +614,9 @@ def insert_business(name, category, description, average_rating=0, total_reviews
          hours or "", photo_url or "", attributes or "", summary or "", yelp_id or "")
     )
     conn.commit()
-    bid = cur.lastrowid
+    business_id = cur.lastrowid
     conn.close()
-    return bid
+    return business_id
 
 
 # ---- Deals ----
@@ -624,9 +624,9 @@ def get_deals_by_business(business_id):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT * FROM deals WHERE business_id = ?", (business_id,))
-    rows = cur.fetchall()
+    deal_rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return [dict(r) for r in deal_rows]
 
 
 def get_all_deals():
@@ -638,9 +638,9 @@ def get_all_deals():
         JOIN businesses b ON d.business_id = b.id
         ORDER BY b.name
     """)
-    rows = cur.fetchall()
+    deal_rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return [dict(r) for r in deal_rows]
 
 
 # ---- Reviews ----
@@ -652,7 +652,7 @@ def add_review(business_id, user_id, rating, review_text, created_date, created_
         VALUES (?, ?, ?, ?, ?, ?)
     """, (business_id, user_id, rating, review_text, created_date, created_time))
     conn.commit()
-    rid = cur.lastrowid
+    review_id = cur.lastrowid
     # Update business average rating and count
     cur.execute("SELECT AVG(rating), COUNT(*) FROM reviews WHERE business_id = ?", (business_id,))
     avg, count = cur.fetchone()
@@ -660,7 +660,7 @@ def add_review(business_id, user_id, rating, review_text, created_date, created_
                 (round(avg, 2) if avg else 0, count or 0, business_id))
     conn.commit()
     conn.close()
-    return rid
+    return review_id
 
 
 def get_reviews_for_business(business_id):
@@ -673,9 +673,9 @@ def get_reviews_for_business(business_id):
         WHERE r.business_id = ?
         ORDER BY r.created_date DESC, r.created_time DESC
     """, (business_id,))
-    rows = cur.fetchall()
+    review_rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return [dict(r) for r in review_rows]
 
 
 def get_reviews_by_user(user_id):
@@ -691,9 +691,9 @@ def get_reviews_by_user(user_id):
         WHERE r.user_id = ?
         ORDER BY r.created_date DESC, r.created_time DESC
     """, (user_id,))
-    rows = cur.fetchall()
+    review_rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return [dict(r) for r in review_rows]
 
 
 def get_trending_businesses(limit=20):
@@ -705,20 +705,20 @@ def get_trending_businesses(limit=20):
         ORDER BY average_rating DESC, total_reviews DESC
         LIMIT ?
     """, (limit * 2,))
-    rows = cur.fetchall()
+    business_rows = cur.fetchall()
     conn.close()
-    seen = set()
-    result = []
-    for r in rows:
-        d = dict(r)
-        bid = d.get("id")
-        if bid in seen:
+    seen_business_ids = set()
+    trending_businesses = []
+    for row in business_rows:
+        business = dict(row)
+        business_id = business.get("id")
+        if business_id in seen_business_ids:
             continue
-        seen.add(bid)
-        result.append(d)
-        if len(result) >= limit:
+        seen_business_ids.add(business_id)
+        trending_businesses.append(business)
+        if len(trending_businesses) >= limit:
             break
-    return result
+    return trending_businesses
 
 
 def get_business_ids_with_deals():
@@ -726,9 +726,9 @@ def get_business_ids_with_deals():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT DISTINCT business_id FROM deals")
-    rows = cur.fetchall()
+    deal_rows = cur.fetchall()
     conn.close()
-    return {r[0] for r in rows}
+    return {r[0] for r in deal_rows}
 
 
 # ---- Favorites ----
@@ -772,19 +772,19 @@ def get_favorite_businesses(user_id):
         WHERE f.user_id = ?
         ORDER BY b.name
     """, (user_id,))
-    rows = cur.fetchall()
+    favorite_rows = cur.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return [dict(r) for r in favorite_rows]
 
 
 def get_recommended_businesses(user_id, limit=20):
     """Recommend businesses: from user's favorite categories (highest rated), then most popular overall."""
-    favs = get_favorite_businesses(user_id) if user_id else []
-    categories = list({b["category"] for b in favs if b.get("category")})
+    favorites = get_favorite_businesses(user_id) if user_id else []
+    categories = list({business["category"] for business in favorites if business.get("category")})
     conn = get_connection()
     cur = conn.cursor()
-    seen_ids = set()
-    result = []
+    seen_business_ids = set()
+    recommended_businesses = []
     if categories:
         placeholders = ",".join("?" * len(categories))
         cur.execute(f"""
@@ -794,21 +794,21 @@ def get_recommended_businesses(user_id, limit=20):
             LIMIT ?
         """, (*categories, user_id, limit))
         for row in cur.fetchall():
-            d = dict(row)
-            if d["id"] not in seen_ids:
-                seen_ids.add(d["id"])
-                result.append(d)
-    if len(result) < limit:
+            business = dict(row)
+            if business["id"] not in seen_business_ids:
+                seen_business_ids.add(business["id"])
+                recommended_businesses.append(business)
+    if len(recommended_businesses) < limit:
         cur.execute("""
             SELECT * FROM businesses
             WHERE id NOT IN (SELECT business_id FROM favorites WHERE user_id = ?)
             ORDER BY average_rating DESC, total_reviews DESC
             LIMIT ?
-        """, (user_id, limit - len(result)))
+        """, (user_id, limit - len(recommended_businesses)))
         for row in cur.fetchall():
-            d = dict(row)
-            if d["id"] not in seen_ids:
-                seen_ids.add(d["id"])
-                result.append(d)
+            business = dict(row)
+            if business["id"] not in seen_business_ids:
+                seen_business_ids.add(business["id"])
+                recommended_businesses.append(business)
     conn.close()
-    return result[:limit]
+    return recommended_businesses[:limit]

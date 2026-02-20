@@ -1,1 +1,1 @@
-# Hidden Gems application package
+"""Hidden Gems application package."""

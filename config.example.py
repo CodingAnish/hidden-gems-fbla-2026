@@ -15,6 +15,12 @@ FROM_NAME = "Hidden Gems"
 # Create App, then copy API Key. Leave empty to use sample businesses only.
 YELP_API_KEY = ""
 
+# ---- Google Maps API ----
+# Get a free API key: https://cloud.google.com/maps-platform
+# Enable: Maps JavaScript API, Geocoding API
+# IMPORTANT: Restrict key to prevent unauthorized use (set Application restrictions & API restrictions)
+GOOGLE_MAPS_API_KEY = ""
+
 # ---- FREE AI Chatbot APIs ----
 # Option 1: Groq API (RECOMMENDED - Free, Fast, Best for demos)
 # Get free key: https://console.groq.com/keys (no credit card needed)

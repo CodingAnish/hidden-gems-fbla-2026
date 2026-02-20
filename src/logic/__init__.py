@@ -1,1 +1,1 @@
-# Logic package
+"""Business logic package."""

@@ -995,3 +995,105 @@ tr:hover {
 .fade-in {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* ===== MAP STYLES (Leaflet + Google Maps) ===== */
+
+/* Leaflet map container */
+#map {
+  border-radius: 8px;
+}
+
+/* Leaflet popup styling */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  background: white;
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+/* Custom Leaflet markers */
+.leaflet-custom-marker {
+  animation: markerPop 0.3s ease-out;
+}
+
+@keyframes markerPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Leaflet controls styling */
+.leaflet-control-zoom a,
+.leaflet-control-zoom a:hover {
+  background: white;
+  color: #2c3e50;
+  border-radius: 4px;
+  width: 38px;
+  height: 38px;
+  line-height: 38px;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.leaflet-control-zoom a:hover {
+  background: #2563EB;
+  color: white;
+}
+
+/* Business popup button styling */
+.business-popup a {
+  transition: all 0.2s ease;
+}
+
+.business-popup a:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Map loading indicator */
+#mapLoadingIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Business list item hover */
+.business-list-item:hover {
+  background: #f0f7ff !important;
+  border-left: 4px solid #2563EB;
+  padding-left: calc(1.5rem - 4px);
+}
+
+/* Responsive map container */
+@media (max-width: 1024px) {
+  #map {
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  #map {
+    min-height: 300px;
+  }
+}

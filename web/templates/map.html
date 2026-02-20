@@ -1,0 +1,957 @@
+{% extends "base.html" %}
+<!-- PAGE TITLE - Set to "Map" in browser tab -->
+{% block title %}Interactive Map{% endblock %}
+<!-- PAGE CONTENT - Interactive map with business markers and filtering -->
+{% block content %}
+
+<!-- HERO SECTION - Blue gradient header with title -->
+<section class="hero" style="background: linear-gradient(135deg, #2563EB 0%, #1e40af 100%);">
+  <!-- Main heading -->
+  <h1 class="page-title" style="color: white;">Discover Businesses on Map</h1>
+  <!-- Subtitle encouraging users to explore -->
+  <p class="page-subtitle" style="color: rgba(255,255,255,0.95);">Click markers to see details, use filters to refine your search</p>
+</section>
+
+<!-- FILTER PANEL SECTION - White card with filter controls -->
+<div style="background: white; padding: 2rem; margin: 0 0 2rem 0; border-bottom: 3px solid #2563EB; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+  <!-- FILTER CONTROLS -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; max-width: 1200px; margin: 0 auto; align-items: flex-end;">
+    <!-- CATEGORY FILTER DROPDOWN -->
+    <div>
+      <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: #2c3e50;">Filter by Category</label>
+      <select id="categoryFilter" style="width: 100%; padding: 0.9rem 1rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}">{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- RATING FILTER DROPDOWN -->
+    <div>
+      <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: #2c3e50;">Minimum Rating</label>
+      <select id="ratingFilter" style="width: 100%; padding: 0.9rem 1rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: all 0.3s;">
+        <option value="0">All Ratings</option>
+        <option value="4">⭐ 4 Stars +</option>
+        <option value="3.5">⭐ 3.5 Stars +</option>
+        <option value="3">⭐ 3 Stars +</option>
+      </select>
+    </div>
+
+    <!-- DEALS ONLY CHECKBOX -->
+    <div style="display: flex; align-items: flex-end;">
+      <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.95rem; color: #2c3e50; cursor: pointer;">
+        <input type="checkbox" id="dealsOnlyFilter" style="width: 1rem; height: 1rem; cursor: pointer;">
+        Show Deals Only
+      </label>
+    </div>
+
+    <!-- RESET FILTERS BUTTON -->
+    <button id="resetFilters" style="background: #666; color: white; border: none; padding: 0.9rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s; height: fit-content;">
+      Reset Filters
+    </button>
+  </div>
+
+  <!-- FILTER STATUS TEXT -->
+  <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+    <p id="filterStatus" style="color: #666; font-weight: 500; font-size: 0.95rem;">Showing all <span id="visibleCount">0</span> businesses on map</p>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT - Map + Side Panel -->
+<div style="display: grid; grid-template-columns: 1fr 350px; gap: 0; height: 700px; margin-bottom: 3rem; border-radius: 8px; overflow: hidden;">
+  
+  <!-- MAP CONTAINER - Full-screen interactive map -->
+  <div id="map-container" style="background: #e0e0e0; border-radius: 8px 0 0 8px; position: relative; width: 100%; height: 100%; overflow: hidden;">
+    <div id="map" style="width: 100%; height: 100%; background: #e0e0e0;"></div>
+    <!-- Loading indicator for initial map load -->
+    <div id="mapLoadingIndicator" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      <p style="color: #2563EB; font-weight: 600; margin: 0;">Loading map...</p>
+    </div>
+  </div>
+
+  <!-- SIDE PANEL - Business list with details -->
+  <div style="background: white; border-left: 3px solid #2563EB; border-radius: 0 8px 8px 0; overflow-y: auto; box-shadow: -2px 0 8px rgba(0,0,0,0.08);">
+    <!-- Panel header -->
+    <div style="padding: 1.5rem; border-bottom: 1px solid #ddd; background: #f9f9f9; position: sticky; top: 0; z-index: 100;">
+      <h2 style="margin: 0; font-size: 1.1rem; color: #2c3e50;">Nearby Businesses</h2>
+      <p id="panelCount" style="margin: 0.5rem 0 0 0; color: #888; font-size: 0.9rem;">Select a marker to view details</p>
+    </div>
+
+    <!-- Business list container -->
+    <div id="businessList" style="padding: 0;">
+      <!-- Businesses will be dynamically added here via JavaScript -->
+      <div style="padding: 1.5rem; color: #888; text-align: center;">
+        <p style="margin: 0;">No businesses with coordinates yet.</p>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Please check back soon!</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- LEGEND SECTION - Color coding explanation -->
+<div style="background: white; padding: 2rem; border-radius: 8px; max-width: 1200px; margin: 0 auto; margin-bottom: 3rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+  <h3 style="margin: 0 0 1rem 0; color: #2c3e50; font-size: 1.1rem;">Map Legend</h3>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+    
+    <!-- Food Category -->
+    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+      <div style="width: 24px; height: 24px; background: #FF6B35; border-radius: 50%; flex-shrink: 0; border: 2px solid white; box-shadow: 0 0 4px rgba(255, 107, 53, 0.6);"></div>
+      <div>
+        <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #2c3e50;">Food & Dining</p>
+        <p style="margin: 0; font-size: 0.9rem; color: #888;">Restaurants, Cafes, Bakeries</p>
+      </div>
+    </div>
+
+    <!-- Shopping Category -->
+    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+      <div style="width: 24px; height: 24px; background: #FF9E1B; border-radius: 50%; flex-shrink: 0; border: 2px solid white; box-shadow: 0 0 4px rgba(255, 158, 27, 0.6);"></div>
+      <div>
+        <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #2c3e50;">Shopping</p>
+        <p style="margin: 0; font-size: 0.9rem; color: #888;">Retail, Boutiques, Markets</p>
+      </div>
+    </div>
+
+    <!-- Entertainment Category -->
+    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+      <div style="width: 24px; height: 24px; background: #A259FF; border-radius: 50%; flex-shrink: 0; border: 2px solid white; box-shadow: 0 0 4px rgba(162, 89, 255, 0.6);"></div>
+      <div>
+        <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #2c3e50;">Entertainment</p>
+        <p style="margin: 0; font-size: 0.9rem; color: #888;">Events, Arts, Recreation</p>
+      </div>
+    </div>
+
+    <!-- Services Category -->
+    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+      <div style="width: 24px; height: 24px; background: #00B0F0; border-radius: 50%; flex-shrink: 0; border: 2px solid white; box-shadow: 0 0 4px rgba(0, 176, 240, 0.6);"></div>
+      <div>
+        <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #2c3e50;">Services</p>
+        <p style="margin: 0; font-size: 0.9rem; color: #888;">Salons, Repairs, Professional</p>
+      </div>
+    </div>
+
+    <!-- Other Category -->
+    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+      <div style="width: 24px; height: 24px; background: #50C878; border-radius: 50%; flex-shrink: 0; border: 2px solid white; box-shadow: 0 0 4px rgba(80, 200, 120, 0.6);"></div>
+      <div>
+        <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #2c3e50;">Other</p>
+        <p style="margin: 0; font-size: 0.9rem; color: #888;">Miscellaneous Businesses</p>
+      </div>
+    </div>
+
+    <!-- Deals Badge -->
+    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+      <div style="padding: 0.25rem 0.5rem; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border-radius: 4px; font-weight: 600; font-size: 0.8rem; flex-shrink: 0;">🎟️ DEAL</div>
+      <div>
+        <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #2c3e50;">Special Deals</p>
+        <p style="margin: 0; font-size: 0.9rem; color: #888;">Promotions & Offers</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Leaflet Map Library (Fallback - Free, Open Source) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Google Maps Script (Primary - with callback) -->
+{% if google_maps_api_key %}
+<script>
+// Initialize callback wrapper that will be overridden at end of script
+let initMapReady = false;
+window.initMapCallback = function() {
+  console.log('✅ Google Maps API loaded');
+  // If initMap hasn't been defined yet, retry in a moment
+  if (!initMapReady) {
+    console.log('⏳ Waiting for initMap to be defined...');
+    setTimeout(window.initMapCallback, 100);
+    return;
+  }
+  initMap();
+};
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMapCallback&libraries=marker" async defer></script>
+{% else %}
+<script>
+console.warn('⚠️ Google Maps API key not configured, using Leaflet fallback');
+// If no API key, initialize with Leaflet
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initMap);
+} else {
+  initMap();
+}
+</script>
+{% endif %}
+
+<!-- Map Initialization Script -->
+<script>
+// Global variables for map and markers
+let map;
+let markers = [];
+let infoWindows = [];
+let allBusinesses = [];
+let filteredBusinesses = [];
+
+// Business data JSON
+const businessesData = {{ businesses | tojson }};
+
+// DEBUG: Log what we received
+console.log('📊 businessesData.length:', businessesData ? businessesData.length : 'null');
+if (businessesData && businessesData.length > 0) {
+  console.log('📊 Sample business:', businessesData[0]);
+} else {
+  console.warn('⚠️ NO BUSINESSES RECEIVED FROM SERVER!');
+}
+
+// Category to color mapping for markers
+const categoryColors = {
+  'Food': '#FF6B35',
+  'Shopping': '#FF9E1B',
+  'Entertainment': '#A259FF',
+  'Services': '#00B0F0',
+  'Other': '#50C878'
+};
+
+// Richmond, VA center coordinates
+const richmondCenter = { lat: 37.5407, lng: -77.4360 };
+
+// Geocoding cache to avoid duplicate API calls
+const geocodeCache = {};
+
+/**
+ * Convert Unicode strings to Base64 (handles emoji and special characters)
+ * btoa() only works with Latin1, so we need to encode Unicode first
+ */
+function unicodeToBase64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+/**
+ * Geocode address to coordinates using Google Geocoding API
+ */
+async function geocodeAddress(address) {
+  if (!address) return null;
+  
+  // Check cache first
+  if (geocodeCache[address]) {
+    console.log('📍 Using cached coordinates for:', address.substring(0, 40));
+    return geocodeCache[address];
+  }
+  
+  try {
+    // Use Google's Geocoding service
+    const geocoder = new google.maps.Geocoder();
+    
+    const result = await new Promise((resolve, reject) => {
+      geocoder.geocode({ address: address }, (results, status) => {
+        if (status === 'OK' && results.length > 0) {
+          const location = results[0].geometry.location;
+          resolve({
+            lat: location.lat(),
+            lng: location.lng()
+          });
+        } else {
+          reject(status);
+        }
+      });
+    });
+    
+    geocodeCache[address] = result;
+    console.log('✅ Geocoded:', address.substring(0, 40), '->', result);
+    return result;
+  } catch (error) {
+    console.warn('⚠️ Geocoding failed for:', address, error);
+    return null;
+  }
+}
+
+/**
+ * Geocode all businesses without coordinates
+ */
+async function geocodeAllBusinesses(businesses) {
+  console.log('🔄 Starting geocoding for', businesses.length, 'businesses...');
+  
+  let geocodedCount = 0;
+  
+  for (const business of businesses) {
+    // Skip if already has coordinates
+    if (business.latitude && business.longitude) {
+      continue;
+    }
+    
+    // Skip if no address
+    if (!business.address) {
+      console.warn('⚠️ No address for:', business.name);
+      continue;
+    }
+    
+    // Geocode the address
+    const coords = await geocodeAddress(business.address);
+    
+    if (coords) {
+      business.latitude = coords.lat;
+      business.longitude = coords.lng;
+      geocodedCount++;
+    }
+    
+    // Small delay to avoid rate limiting (100ms between requests)
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
+  console.log(`✅ Geocoded ${geocodedCount} businesses`);
+  return geocodedCount;
+}
+
+/**
+ * Initialize Map (Leaflet as primary, Google Maps as optional)
+ */
+function initMap() {
+  console.log('🗺️ Starting map initialization...');
+  
+  try {
+    // Hide loading indicator
+    const loadingEl = document.getElementById('mapLoadingIndicator');
+    if (loadingEl) loadingEl.style.display = 'none';
+    
+    // Initialize with all businesses
+    allBusinesses = businessesData || [];
+    filteredBusinesses = [...allBusinesses];
+    
+    console.log(`📍 Found ${allBusinesses.length} businesses`);
+    
+    // Check at runtime if Google Maps is available
+    const hasGoogleMaps = typeof google !== 'undefined' && google.maps && google.maps.Map;
+    
+    if (hasGoogleMaps) {
+      console.log('✓ Google Maps API available, initializing...');
+      initGoogleMap();
+      
+      // Geocode businesses asynchronously
+      console.log('🔄 Geocoding businesses from Yelp addresses...');
+      geocodeAllBusinesses(allBusinesses).then(() => {
+        console.log('✅ Geocoding complete, updating map...');
+        // Update map with geocoded coordinates
+        updateBusinessList(filteredBusinesses);
+      });
+    } else {
+      console.log('ℹ Google Maps not available, using Leaflet...');
+      initLeafletMap();
+    }
+    
+    // Setup event listeners for filters
+    setupFilterListeners();
+    
+    console.log(`✅ Map initialization complete`);
+  } catch (error) {
+    console.error('❌ Error initializing map:', error);
+    // Fallback to Leaflet on any error
+    try {
+      initLeafletMap();
+      setupFilterListeners();
+    } catch (fallbackError) {
+      console.error('❌ Fallback to Leaflet also failed:', fallbackError);
+    }
+  }
+}
+
+/**
+ * Initialize Leaflet Map (Free, Open Source)
+ */
+function initLeafletMap() {
+  console.log('🌍 Initializing Leaflet map...');
+  
+  try {
+    // Destroy existing map if it exists
+    if (map && map.remove) {
+      map.remove();
+      map = null;
+    }
+    
+    // Create Leaflet map
+    const mapContainer = document.getElementById('map');
+    if (!mapContainer) {
+      throw new Error('Map container not found');
+    }
+    
+    map = L.map('map').setView([richmondCenter.lat, richmondCenter.lng], 12);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+      className: 'leaflet-tile'
+    }).addTo(map);
+    
+    console.log('✓ Leaflet map created');
+    
+    // Populate business list (which will handle marker display)
+    updateBusinessList(filteredBusinesses);
+    
+    console.log('✓ Leaflet map fully loaded');
+  } catch (error) {
+    console.error('Error initializing Leaflet:', error);
+    throw error;
+  }
+}
+
+/**
+ * Initialize Google Map (requires API key)
+ */
+function initGoogleMap() {
+  try {
+    console.log('�️ Initializing Google Map...');
+    
+    // Create map centered on Richmond, VA
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 12,
+      center: richmondCenter,
+      mapTypeControl: true,
+      fullscreenControl: true,
+      streetViewControl: false,
+      styles: [
+        {
+          featureType: 'poi',
+          elementType: 'labels',
+          stylers: [{ visibility: 'off' }]
+        }
+      ]
+    });
+    
+    console.log('✅ Google Map object created');
+    
+    // Note: updateBusinessList() is called after geocoding completes in initMap()
+  } catch (error) {
+    console.error('Error initializing Google Map:', error);
+    console.log('Falling back to Leaflet...');
+    initLeafletMap();
+  }
+}
+
+/**
+ * Add Leaflet markers to map
+ */
+function addLeafletMarkers(businesses) {
+  // Clear existing markers
+  if (map) {
+    map.eachLayer(layer => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+  }
+  markers = [];
+  
+  businesses.forEach(business => {
+    if (!business.latitude || !business.longitude) return;
+    
+    const color = categoryColors[business.category] || categoryColors['Other'];
+    
+    // Create custom icon
+    const markerIcon = L.divIcon({
+      html: `
+        <div style="
+          background: ${color};
+          border: 3px solid white;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        ">
+          ${getCategoryEmoji(business.category)}
+        </div>
+      `,
+      iconSize: [40, 40],
+      className: 'leaflet-custom-marker'
+    });
+    
+    // Create marker
+    const marker = L.marker([business.latitude, business.longitude], {
+      icon: markerIcon,
+      title: business.name
+    }).addTo(map);
+    
+    // Bind popup
+    marker.bindPopup(createBusinessPopup(business), {
+      className: 'business-popup',
+      maxWidth: 300
+    });
+    
+    // Add click handler
+    marker.on('click', () => {
+      highlightBusinessInList(business.id);
+      map.setView([business.latitude, business.longitude], Math.max(map.getZoom(), 13));
+    });
+    
+    markers.push(marker);
+  });
+  
+  document.getElementById('visibleCount').textContent = markers.length;
+}
+
+/**
+ * Add Google Map markers
+ */
+/**
+ * Update map markers to show only current page businesses
+ */
+function updateMapMarkers(businesses) {
+  try {
+    console.log('🗺️ Updating map markers for current page:', businesses.length, 'businesses');
+    
+    const hasGoogleMaps = typeof google !== 'undefined' && google.maps && google.maps.Map;
+    
+    if (hasGoogleMaps && map instanceof google.maps.Map) {
+      addGoogleMarkers(businesses);
+      fitGoogleMapToBounds();
+    } else if (map && map instanceof L.Map) {
+      addLeafletMarkers(businesses);
+      fitLeafletMapToBounds();
+    }
+  } catch (error) {
+    console.error('❌ Error updating markers:', error);
+  }
+}
+
+/**
+ * Add Google Map markers for current page
+ */
+function addGoogleMarkers(businesses) {
+  try {
+    console.log('📍 Adding Google markers for', businesses.length, 'businesses');
+    
+    // Clear existing markers
+    markers.forEach(marker => marker.setMap(null));
+    infoWindows.forEach(info => info.close());
+    markers = [];
+    infoWindows = [];
+    
+    // Map to store markers by business ID for quick lookup
+    const markerMap = {};
+    
+    let successCount = 0;
+    
+    businesses.forEach(business => {
+      if (!business.latitude || !business.longitude) {
+        console.warn('⚠️ Skipping business without coordinates:', business.name);
+        return;
+      }
+      
+      const color = categoryColors[business.category] || categoryColors['Other'];
+      
+      // Create SVG marker icon with emoji
+      const svgMarker = `
+        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" fill="${color}" stroke="white" stroke-width="3"/>
+          <text x="20" y="26" text-anchor="middle" font-size="20" dominant-baseline="central">
+            ${getCategoryEmoji(business.category)}
+          </text>
+        </svg>
+      `;
+      
+      const marker = new google.maps.Marker({
+        position: { lat: business.latitude, lng: business.longitude },
+        map: map,
+        title: business.name,
+        icon: {
+          url: 'data:image/svg+xml;base64,' + unicodeToBase64(svgMarker),
+          scaledSize: new google.maps.Size(40, 40),
+          anchor: new google.maps.Point(20, 20)
+        }
+      });
+      
+      // Store business ID with marker for lookup
+      marker.businessId = business.id;
+      
+      // Create info window
+      const infoWindow = new google.maps.InfoWindow({
+        content: createBusinessPopup(business),
+        maxWidth: 300
+      });
+      
+      // Add click listener to marker
+      marker.addListener('click', () => {
+        // Close all other windows first
+        infoWindows.forEach(iw => iw.close());
+        infoWindow.open(map, marker);
+        highlightBusinessInList(business.id);
+      });
+      
+      markers.push(marker);
+      infoWindows.push(infoWindow);
+      markerMap[business.id] = marker;
+      successCount++;
+    });
+    
+    // Store marker map globally for easy lookup
+    window.markersByBusinessId = markerMap;
+    
+    console.log('✅ Successfully added', successCount, 'markers to Google Map');
+    document.getElementById('visibleCount').textContent = markers.length;
+  } catch (error) {
+    console.error('❌ Error adding Google markers:', error);
+  }
+}
+
+/**
+ * Get emoji for business category
+ */
+function getCategoryEmoji(category) {
+  const emojis = {
+    'Food': '🍽️',
+    'Shopping': '🛍️',
+    'Entertainment': '🎭',
+    'Services': '🔧',
+    'Other': '📍'
+  };
+  return emojis[category] || '📍';
+}
+
+/**
+ * Create popup HTML for business
+ */
+function createBusinessPopup(business) {
+  return `
+    <div style="font-family: Arial, sans-serif; min-width: 280px; max-width: 300px;">
+      <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 1.1rem;">${business.name}</h3>
+      <div style="margin-bottom: 1rem;">
+        <p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">
+          <strong>${business.category}</strong>
+        </p>
+        ${business.address ? `<p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">${business.address}</p>` : ''}
+        ${business.phone ? `<p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">📞 ${business.phone}</p>` : ''}
+      </div>
+      <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #ddd;">
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <div>
+            <span style="color: #f39c12; font-weight: bold;">⭐ ${business.average_rating ? business.average_rating.toFixed(1) : 'N/A'}</span>
+            <span style="color: #888; font-size: 0.9rem;">${business.total_reviews || 0} reviews</span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}" target="_blank" rel="noopener" style="flex: 1; padding: 0.5rem; background: #2563EB; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: 600; font-size: 0.9rem;">Directions</a>
+        <a href="/business/${business.id}" style="flex: 1; padding: 0.5rem; background: #9b59b6; color: white; text-decoration: none; border-radius: 4px; text-align: center; font-weight: 600; font-size: 0.9rem;">Details</a>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Fit Leaflet map bounds to show all markers
+ */
+function fitLeafletMapToBounds() {
+  if (markers.length === 0) return;
+  
+  const group = new L.featureGroup(markers);
+  map.fitBounds(group.getBounds(), { padding: [50, 50] });
+}
+
+/**
+ * Fit Google Map bounds to show all markers
+ */
+function fitGoogleMapToBounds() {
+  try {
+    if (!map || markers.length === 0) {
+      console.log('⚠️ No markers to fit bounds, centering on Richmond');
+      map.setCenter(richmondCenter);
+      map.setZoom(12);
+      return;
+    }
+    
+    console.log('📍 Fitting bounds to', markers.length, 'markers');
+    const bounds = new google.maps.LatLngBounds();
+    
+    markers.forEach(marker => {
+      const pos = marker.getPosition();
+      if (pos) bounds.extend(pos);
+    });
+    
+    if (!bounds.isEmpty()) {
+      map.fitBounds(bounds, { padding: 100 });
+      console.log('✅ Map bounds fitted to show all markers');
+    } else {
+      console.log('⚠️ Bounds empty, centering on Richmond');
+      map.setCenter(richmondCenter);
+      map.setZoom(12);
+    }
+  } catch (error) {
+    console.error('❌ Error fitting bounds:', error);
+    map.setCenter(richmondCenter);
+    map.setZoom(12);
+  }
+}
+
+/**
+ * Update business list in side panel
+ */
+// Track displayed businesses for pagination
+let displayedBusinessCount = 12;
+let allFilteredBusinesses = [];
+let currentPageBusinesses = [];
+let itemsPerPage = 12;
+
+function updateBusinessList(businesses, resetCount = true) {
+  console.log('📋 updateBusinessList called:');
+  console.log('   resetCount =', resetCount);
+  console.log('   businesses.length =', businesses.length);
+  console.log('   displayedBusinessCount BEFORE =', displayedBusinessCount);
+  
+  const listContainer = document.getElementById('businessList');
+  allFilteredBusinesses = businesses;
+  
+  // Only reset count when filters change, not when loading more
+  if (resetCount) {
+    console.log('   🔄 Resetting displayedBusinessCount to 12');
+    displayedBusinessCount = 12;
+  } else {
+    console.log('   ✅ NOT resetting - keeping displayedBusinessCount', displayedBusinessCount);
+  }
+  
+  console.log('   displayedBusinessCount AFTER =', displayedBusinessCount);
+  
+  if (businesses.length === 0) {
+    listContainer.innerHTML = `
+      <div style="padding: 1.5rem; color: #888; text-align: center;">
+        <p style="margin: 0;">No businesses match your filters.</p>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Try adjusting your search criteria.</p>
+      </div>
+    `;
+    document.getElementById('panelCount').textContent = 'No matches';
+    return;
+  }
+  
+  // Sort by rating descending
+  console.log('   Sorting businesses by rating...');
+  const sorted = [...businesses].sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0));
+  allFilteredBusinesses = sorted;
+  
+  console.log('   Sorted array length:', sorted.length);
+  console.log('   Will slice from 0 to', displayedBusinessCount);
+  
+  // Show only first 12 businesses (or current page if loading more)
+  const displayed = sorted.slice(0, displayedBusinessCount);
+  currentPageBusinesses = displayed;
+  
+  console.log('   Displayed array length AFTER SLICE:', displayed.length);
+  console.log('   Calling renderBusinessList with', displayed.length, 'items');
+  
+  // Rebuild the list
+  renderBusinessList(displayed);
+  
+  console.log('   After renderBusinessList, calling updateMapMarkers with', displayed.length, 'items');
+  
+  // Update map to show only current page markers
+  updateMapMarkers(displayed);
+  
+  document.getElementById('panelCount').textContent = `Showing ${Math.min(displayedBusinessCount, businesses.length)} of ${businesses.length} business${businesses.length !== 1 ? 'es' : ''}`;
+}
+
+function renderBusinessList(businesses) {
+  const listContainer = document.getElementById('businessList');
+  console.log('🎨 renderBusinessList called with', businesses.length, 'businesses');
+  console.log('🎨 displayedBusinessCount =', displayedBusinessCount);
+  console.log('🎨 allFilteredBusinesses.length =', allFilteredBusinesses.length);
+  
+  let html = businesses.map(business => `
+    <div class="business-list-item" data-business-id="${business.id}" role="button" tabindex="0" style="padding: 1.5rem; border-bottom: 1px solid #ddd; cursor: pointer; transition: all 0.2s ease; user-select: none;" onmouseover="this.style.backgroundColor='#f0f4ff'; this.style.transform='translateX(4px)'" onmouseout="this.style.backgroundColor='transparent'; this.style.transform='translateX(0)'">
+      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+        <h4 style="margin: 0; color: #2c3e50; font-size: 1rem;">${business.name}</h4>
+        ${business.total_reviews > 0 ? `<span style="background: #f39c12; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.85rem;">⭐ ${business.average_rating ? business.average_rating.toFixed(1) : 'N/A'}</span>` : ''}
+      </div>
+      <p style="margin: 0.25rem 0; color: #666; font-size: 0.9rem;">${business.category}</p>
+      ${business.address ? `<p style="margin: 0.25rem 0; color: #888; font-size: 0.85rem;">📍 ${business.address.substring(0, 50)}${business.address.length > 50 ? '...' : ''}</p>` : ''}
+      ${business.total_reviews > 0 ? `<p style="margin: 0.25rem 0; color: #888; font-size: 0.85rem;">${business.total_reviews} reviews</p>` : ''}
+      ${business.deals && business.deals.length > 0 ? `<div style="margin-top: 0.5rem; padding: 0.4rem 0.6rem; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border-radius: 4px; font-size: 0.8rem; font-weight: 600; display: inline-block;">🎟️ Special Deal</div>` : ''}
+    </div>
+  `).join('');
+  
+  // Add "Load More" button if there are more businesses to show
+  const totalToShow = displayedBusinessCount;
+  if (allFilteredBusinesses.length > totalToShow) {
+    const remaining = allFilteredBusinesses.length - totalToShow;
+    console.log('📱 Button condition TRUE: Creating Load More button - showing', totalToShow, 'of', allFilteredBusinesses.length, '(remaining:', remaining + ')');
+    html += `
+      <div style="padding: 1.5rem; border-top: 2px solid #2563EB; text-align: center;">
+        <button id="loadMoreBtn" style="background: linear-gradient(135deg, #2563EB 0%, #1e40af 100%); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.3s; width: 90%; max-width: 150px;">
+          Load More (${remaining} more)
+        </button>
+      </div>
+    `;
+  } else {
+    console.log('📱 Button condition FALSE: NOT creating button - showing all', totalToShow, 'of', allFilteredBusinesses.length);
+  }
+  
+  listContainer.innerHTML = html;
+  console.log('🎨 render complete - rendered', businesses.length, 'items');
+  
+  // Attach click handler to Load More button if it exists
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  if (loadMoreBtn) {
+    console.log('🔘 Found Load More button, attaching click handler');
+    loadMoreBtn.addEventListener('click', handleLoadMore);
+  }
+  
+  // Add click handlers to list items
+  document.querySelectorAll('.business-list-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const businessId = parseInt(item.getAttribute('data-business-id'));
+      const business = allBusinesses.find(b => b.id === businessId);
+      if (!business) {
+        console.warn('⚠️ Business not found:', businessId);
+        return;
+      }
+      
+      console.log('🖱️ Clicked business:', business.name, 'ID:', businessId);
+      
+      // Check if Google Maps is available at runtime
+      const hasGoogleMaps = typeof google !== 'undefined' && google.maps && google.maps.Map;
+      
+      if (hasGoogleMaps && map instanceof google.maps.Map) {
+        // Find marker by business ID using the marker map
+        const marker = window.markersByBusinessId && window.markersByBusinessId[businessId];
+        if (marker) {
+          console.log('✅ Found marker for business:', businessId);
+          // Trigger the click event on the marker to open popup
+          google.maps.event.trigger(marker, 'click');
+          // Pan to the marker
+          map.panTo(marker.getPosition());
+          // Optionally zoom in
+          if (map.getZoom() < 15) {
+            map.setZoom(15);
+          }
+        } else {
+          console.warn('⚠️ No marker found for business ID:', businessId);
+        }
+      } else if (map && map instanceof L.Map) {
+        // For Leaflet, find the marker by business ID
+        markers.forEach(marker => {
+          if (marker.business && marker.business.id === businessId) {
+            marker.openPopup();
+            highlightBusinessInList(businessId);
+            map.setView([business.latitude, business.longitude], Math.max(map.getZoom(), 13));
+          }
+        });
+      }
+    });
+  });
+}
+
+/**
+ * Highlight a business in the side list
+ */
+function highlightBusinessInList(businessId) {
+  document.querySelectorAll('.business-list-item').forEach(item => {
+    item.style.backgroundColor = item.getAttribute('data-business-id') == businessId ? '#e8f0fe' : 'transparent';
+  });
+}
+
+/**
+ * Fit map bounds to show all visible markers
+ */
+function fitMapToBounds() {
+  if (markers.length === 0) return;
+  
+  const bounds = new google.maps.LatLngBounds();
+  markers.forEach(marker => bounds.extend(marker.position));
+  map.fitBounds(bounds, { padding: 50 });
+  
+  // Don't zoom in too much
+  const zoomListener = map.addListener('zoom_changed', () => {
+    if (map.getZoom() > 14) map.setZoom(14);
+    google.maps.event.removeListener(zoomListener);
+  });
+}
+
+/**
+ * Setup filter event listeners
+ */
+function setupFilterListeners() {
+  document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+  document.getElementById('ratingFilter').addEventListener('change', applyFilters);
+  document.getElementById('dealsOnlyFilter').addEventListener('change', applyFilters);
+  document.getElementById('resetFilters').addEventListener('click', resetAllFilters);
+}
+
+/**
+ * Apply active filters to map and list
+ */
+function applyFilters() {
+  const categoryFilter = document.getElementById('categoryFilter').value;
+  const ratingFilter = parseFloat(document.getElementById('ratingFilter').value) || 0;
+  const dealsOnly = document.getElementById('dealsOnlyFilter').checked;
+  
+  filteredBusinesses = allBusinesses.filter(business => {
+    // Category filter
+    if (categoryFilter && business.category !== categoryFilter) return false;
+    
+    // Rating filter
+    const rating = business.average_rating || 0;
+    if (rating < ratingFilter) return false;
+    
+    // Deals filter
+    if (dealsOnly && (!business.deals || business.deals.length === 0)) return false;
+    
+    // Must have coordinates for map
+    if (!business.latitude || !business.longitude) return false;
+    
+    return true;
+  });
+  
+  // Update map and list with filtered businesses (resetCount=true to reset pagination)
+  updateBusinessList(filteredBusinesses, true);
+  
+  // Update status text
+  const status = [];
+  if (categoryFilter) status.push(`Category: ${categoryFilter}`);
+  if (ratingFilter > 0) status.push(`Rating: ${ratingFilter}+ stars`);
+  if (dealsOnly) status.push('Deals only');
+  
+  const statusEl = document.getElementById('filterStatus');
+  if (status.length > 0) {
+    statusEl.textContent = `Filtered by ${status.join(' • ')} — Showing ${filteredBusinesses.length} businesses`;
+  } else {
+    statusEl.textContent = `Showing all ${filteredBusinesses.length} businesses on map`;
+  }
+}
+
+/**
+ * Reset all filters to initial state
+ */
+function resetAllFilters() {
+  document.getElementById('categoryFilter').value = '';
+  document.getElementById('ratingFilter').value = '0';
+  document.getElementById('dealsOnlyFilter').checked = false;
+  applyFilters();
+}
+
+/**
+ * Set flag to indicate all functions are ready
+ */
+initMapReady = true;
+console.log('✅ All map functions ready for callback');
+
+/**
+ * Handle Load More button click
+ */
+function handleLoadMore() {
+  console.log('🔘 LOAD MORE BUTTON CLICKED!');
+  console.log('   Current displayedBusinessCount:', displayedBusinessCount);
+  console.log('   itemsPerPage:', itemsPerPage);
+  console.log('   allFilteredBusinesses.length:', allFilteredBusinesses.length);
+  
+  displayedBusinessCount += itemsPerPage;
+  
+  console.log('   Updated displayedBusinessCount:', displayedBusinessCount);
+  console.log('   Calling updateBusinessList with resetCount=false');
+  
+  updateBusinessList(allFilteredBusinesses, false);
+}
+</script>
+
+{% endblock %}

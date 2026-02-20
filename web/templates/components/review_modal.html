@@ -58,17 +58,25 @@
                 <div id="char-count" aria-live="polite">0 / 500 characters</div>
             </div>
             
-            <div class="form-group captcha-section">
-                <p class="captcha-question" id="captcha-question">Loading verification...</p>
-                <label for="captcha-answer">Your Answer *</label>
-                <input 
-                    type="number" 
-                    id="captcha-answer" 
-                    name="captcha_answer"
-                    placeholder="Enter your answer"
-                    required
-                    aria-required="true"
-                >
+            <!-- CAPTCHA VERIFICATION SECTION -->
+            <div class="form-group captcha-section" style="background: linear-gradient(135deg, #f8f9fa 0%, #fff3cd 100%); border-left: 4px solid #ffc107; padding: 1.25rem; border-radius: 8px; margin: 1.5rem 0;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <label style="font-weight: 600; color: #856404; margin: 0;">🔒 Verification Question</label>
+                    <button type="button" id="refreshCaptchaBtn" onclick="Reviews.loadCaptcha()" style="background: #ffc107; border: none; color: #000; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">🔄 New Question</button>
+                </div>
+                <p class="captcha-question" id="captcha-question" style="font-weight: bold; color: #333; margin: 0 0 1rem 0; font-size: 1rem;">Loading verification question...</p>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input 
+                        type="number" 
+                        id="captcha-answer" 
+                        name="captcha_answer"
+                        placeholder="Enter your answer"
+                        required
+                        aria-required="true"
+                        style="flex: 1; padding: 0.75rem 1rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem;"
+                    />
+                </div>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666;">Answer the verification question to prove you're not a bot</p>
             </div>
             
             <button type="submit" class="btn-submit" aria-label="Submit your review">

@@ -676,6 +676,79 @@ kbd {
    ERROR MESSAGES
    ============================================ */
 
+/* ============================================
+   VALIDATION ALERTS (Bottom of Page)
+   ============================================ */
+
+.validation-alert-container {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    max-width: 600px;
+    width: calc(100% - 4rem);
+}
+
+.validation-alert {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    border-left: 6px solid #a02830;
+}
+
+.validation-alert .alert-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.validation-alert .alert-errors {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.validation-alert .alert-errors li {
+    padding: 0.4rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.validation-alert .alert-errors li:before {
+    content: '•';
+    font-weight: bold;
+    color: #ffeb3b;
+}
+
+.validation-alert-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+}
+
+.validation-alert-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 .error-message {
     background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
     color: white;

@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<!-- =====================================================
+{# =====================================================
 BASE TEMPLATE FOR HIDDEN GEMS APPLICATION
 =====================================================
 This is the foundation template for the entire Hidden Gems website.
@@ -8,7 +7,7 @@ All other pages extend this template using Jinja2 block inheritance.
 SECTIONS:
 - Head: Meta tags, stylesheets, manifest for PWA
 - Header: Navigation bar with user menu dropdown
-- Main: Central content area where child pages render ({% block content %})
+- Main: Central content area where child pages render (block content)
 - Footer: Application footer with branding
 - Scripts: Initialization code, favorites counter, mobile menu toggle
 - Components: Conditional includes for authenticated users (chatbot, modals)
@@ -24,7 +23,8 @@ KEY FEATURES:
 - PWA manifest support for mobile installation
 
 USED BY: All content pages (home, login, register, business detail, etc.)
-===================================================== -->
+===================================================== #}
+<!DOCTYPE html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,6 +60,8 @@ USED BY: All content pages (home, login, register, business detail, etc.)
       <!-- AUTHENTICATED USER NAVIGATION -->
       <!-- Main navigation menu with links to key app sections -->
       <nav class="nav" id="mainNav" role="navigation" aria-label="Main" style="gap: 0.5rem;">
+        <!-- Map Link - Interactive map view of businesses -->
+        <a href="{{ url_for('map_view') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'map_view' %}border-bottom: 3px solid #16a34a; background: rgba(22, 163, 74, 0.1);{% endif %} transition: all 0.3s;">🗺️ Map</a>
         <!-- Directory Link - Browse all businesses -->
         <a href="{{ url_for('directory') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'directory' or request.endpoint == 'business_detail' %}border-bottom: 3px solid #2563EB; background: rgba(37, 99, 235, 0.1);{% endif %} transition: all 0.3s;">Directory</a>
         <!-- Trending Link - View trending/popular businesses -->
@@ -252,5 +254,5 @@ USED BY: All content pages (home, login, register, business detail, etc.)
   
   <!-- CHILD PAGE SCRIPTS BLOCK - Child pages can inject custom scripts here -->
   {% block scripts %}{% endblock %}
-</body>
+  </body>
 </html>

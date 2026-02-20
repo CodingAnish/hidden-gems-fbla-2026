@@ -152,12 +152,6 @@ def detect_intent(user_message):
     
     # Default to general conversation
     return "general"
-    
-    # Greeting
-    if any(word in message_lower for word in ["hi", "hello", "hey", "good morning", "good afternoon"]):
-        return "greeting"
-    
-    return "general"
 
 
 def get_quick_actions(intent):
@@ -332,23 +326,23 @@ def call_huggingface_api(messages, user_message, system_prompt, api_key):
 
 def rule_based_response(user_message):
     """Rule-based chatbot fallback (NO API NEEDED)."""
-    message_lower = user_message.lower()
+    normalized_message = user_message.lower()
     
     # Intent 1: Greeting
-    if any(word in message_lower for word in ["hi", "hello", "hey", "good morning", "good afternoon"]):
+    if any(word in normalized_message for word in ["hi", "hello", "hey", "good morning", "good afternoon"]):
         return ("👋 Hi there! Welcome to Hidden Gems! I can help you:\n\n• Find local businesses in Richmond\n• Show current deals and promotions\n• Get recommendations based on ratings\n• Answer questions about businesses\n\nWhat would you like to explore?",
                 ["Find Restaurants", "Show Deals", "Top Rated"])
     
     # Intent 2: Deals
-    if any(word in message_lower for word in ["deal", "discount", "coupon", "promo", "special", "offer"]):
-        deals_businesses = [b for b in queries.get_all_businesses() if queries.get_deals_by_business(b.get("id"))]
+    if any(word in normalized_message for word in ["deal", "discount", "coupon", "promo", "special", "offer"]):
+        deals_businesses = [business for business in queries.get_all_businesses() if queries.get_deals_by_business(business.get("id"))]
         if deals_businesses:
             response = "🎁 Here are today's best deals:\n\n"
-            for b in deals_businesses[:3]:
-                deals = queries.get_deals_by_business(b.get("id"))
-                response += f"• {b.get('name')} ({b.get('category')})\n"
-                for d in deals:
-                    response += f"  {d.get('description')}\n"
+            for business in deals_businesses[:3]:
+                deals = queries.get_deals_by_business(business.get("id"))
+                response += f"• {business.get('name')} ({business.get('category')})\n"
+                for deal in deals:
+                    response += f"  {deal.get('description')}\n"
                 response += "\n"
             return (response + "Want to see more details?", ["View All Deals", "Browse Directory"])
         else:
@@ -356,12 +350,12 @@ def rule_based_response(user_message):
                    ["Top Rated", "Browse Directory"])
     
     # Intent 3: Search/Find
-    if any(word in message_lower for word in ["find", "search", "looking for", "show me", "where", "need"]):
+    if any(word in normalized_message for word in ["find", "search", "looking for", "show me", "where", "need"]):
         # Try to detect category
         categories = queries.get_categories()
         detected_cat = None
         for cat in categories:
-            if cat.lower() in message_lower:
+            if cat.lower() in normalized_message:
                 detected_cat = cat
                 break
         
@@ -369,9 +363,9 @@ def rule_based_response(user_message):
             businesses = queries.get_businesses_for_directory(category=detected_cat, sort_by="rating_high")[:3]
             if businesses:
                 response = f"I found {len(businesses)} great {detected_cat} businesses:\n\n"
-                for b in businesses:
-                    response += f"⭐ {b.get('name')} - {b.get('average_rating')}★ ({b.get('total_reviews')} reviews)\n"
-                    response += f"   {b.get('category')}\n\n"
+                for business in businesses:
+                    response += f"⭐ {business.get('name')} - {business.get('average_rating')}★ ({business.get('total_reviews')} reviews)\n"
+                    response += f"   {business.get('category')}\n\n"
                 return (response + "Would you like more details?", ["Show More", "View Deals", "Different Category"])
         
         # Ask for category
@@ -379,16 +373,16 @@ def rule_based_response(user_message):
                ["Food", "Retail", "Services", "Health & Wellness"])
     
     # Intent 4: Best/Top/Recommend
-    if any(word in message_lower for word in ["best", "top", "recommend", "popular", "favorite", "highest"]):
+    if any(word in normalized_message for word in ["best", "top", "recommend", "popular", "favorite", "highest"]):
         businesses = sorted(queries.get_all_businesses(), key=lambda x: x.get("average_rating", 0), reverse=True)[:3]
         response = "🌟 Here are Richmond's top-rated businesses:\n\n"
-        for b in businesses:
-            response += f"⭐ {b.get('name')} - {b.get('average_rating')}★ ({b.get('total_reviews')} reviews)\n"
-            response += f"   {b.get('category')}\n\n"
+        for business in businesses:
+            response += f"⭐ {business.get('name')} - {business.get('average_rating')}★ ({business.get('total_reviews')} reviews)\n"
+            response += f"   {business.get('category')}\n\n"
         return (response + "Want to know more about any of these?", ["View Details", "Show Deals", "Different Category"])
     
     # Intent 5: Help
-    if any(word in message_lower for word in ["help", "how", "what can you do", "commands"]):
+    if any(word in normalized_message for word in ["help", "how", "what can you do", "commands"]):
         return ("I can help you with:\n\n🔍 Finding businesses by category\n⭐ Getting top-rated recommendations\n🎁 Showing current deals\n📍 Business details and information\n\nJust ask me what you're looking for!",
                ["Find Restaurants", "Show Deals", "Top Rated"])
     

@@ -111,8 +111,8 @@ def _yelp_category_to_app(yelp_categories):
     """Map Yelp category list to our app category (Food, Retail, etc.)."""
     if not yelp_categories:
         return "Retail"
-    for cat in yelp_categories:
-        alias = (cat.get("alias") or "").lower()
+    for category_entry in yelp_categories:
+        alias = (category_entry.get("alias") or "").lower()
         if alias in YELP_TO_APP_CATEGORY:
             return YELP_TO_APP_CATEGORY[alias]
     return "Retail"
@@ -179,19 +179,19 @@ def _business_to_row(b):
         return None
     rating = float(b.get("rating") or 0)
     review_count = int(b.get("review_count") or 0)
-    cats = b.get("categories") or []
-    category = _yelp_category_to_app(cats)
-    loc = b.get("location") or {}
-    city = loc.get("city") or "Richmond"
-    state = loc.get("state") or "VA"
-    zip_code = loc.get("zip_code") or ""
+    categories = b.get("categories") or []
+    category = _yelp_category_to_app(categories)
+    location_data = b.get("location") or {}
+    city = location_data.get("city") or "Richmond"
+    state = location_data.get("state") or "VA"
+    zip_code = location_data.get("zip_code") or ""
     
     # Address
-    display_addr = loc.get("display_address")
-    if isinstance(display_addr, list) and display_addr:
-        address = ", ".join(str(x).strip() for x in display_addr if x)
+    display_address = location_data.get("display_address")
+    if isinstance(display_address, list) and display_address:
+        address = ", ".join(str(x).strip() for x in display_address if x)
     else:
-        address = ", ".join(filter(None, [loc.get("address1"), city, state, zip_code]))
+        address = ", ".join(filter(None, [location_data.get("address1"), city, state, zip_code]))
     
     # Basic description
     description = f"Local {category.lower()} in {city}, VA."
@@ -212,9 +212,12 @@ def _business_to_row(b):
     hours_data = b.get("hours", [])
     hours_text = ""
     if hours_data and isinstance(hours_data, list) and len(hours_data) > 0:
-        hours_arr = hours_data[0].get("open", [])
-        if hours_arr:
-            hours_text = "; ".join([f"{h.get('day', 'Mon')}: {h.get('start', 'Closed')}-{h.get('end', 'Closed')}" for h in hours_arr])
+        hours_entries = hours_data[0].get("open", [])
+        if hours_entries:
+            hours_text = "; ".join([
+                f"{entry.get('day', 'Mon')}: {entry.get('start', 'Closed')}-{entry.get('end', 'Closed')}"
+                for entry in hours_entries
+            ])
     
     # Attributes (accepts_credit_cards, parking_options, etc.)
     attributes = b.get("attributes", {}) or {}
@@ -263,18 +266,18 @@ def fetch_richmond_businesses(max_per_category=50):
         ("nightlife", "Entertainment"),
         ("gyms", "Health and Wellness"),
     ]
-    for yelp_cat, app_cat in searches:
-        data, err = _request(limit=min(50, max_per_category), categories=yelp_cat)
+    for yelp_category, _app_category in searches:
+        data, err = _request(limit=min(50, max_per_category), categories=yelp_category)
         if err:
             _last_error = err
             # Continue to next category; maybe one will work
             continue
         if not data or "businesses" not in data:
             continue
-        for b in data.get("businesses", []):
-            if b.get("is_closed"):
+        for business_data in data.get("businesses", []):
+            if business_data.get("is_closed"):
                 continue
-            row = _business_to_row(b)
+            row = _business_to_row(business_data)
             if not row:
                 continue
             key = (row["name"].lower(), row["category"])

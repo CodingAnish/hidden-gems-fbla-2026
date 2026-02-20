@@ -77,25 +77,31 @@ const Validator = {
         const errors = [];
         
         if (!data.userName || data.userName.trim().length < 2) {
-            errors.push('Name must be at least 2 characters');
+            errors.push('❌ Name must be at least 2 characters');
         }
         if (data.userName && data.userName.length > 50) {
-            errors.push('Name too long (max 50 characters)');
+            errors.push('❌ Name too long (max 50 characters)');
         }
         
         if (!data.rating || data.rating < 1 || data.rating > 5) {
-            errors.push('Please select a star rating (1-5)');
+            errors.push('❌ Please select a star rating (1-5 stars)');
         }
         
-        if (!data.comment || data.comment.trim().length < 10) {
-            errors.push('Review must be at least 10 characters');
-        }
-        if (data.comment && data.comment.length > 500) {
-            errors.push('Review too long (max 500 characters)');
+        // Enhanced: More specific message about review length
+        const commentLength = data.comment ? data.comment.trim().length : 0;
+        if (!data.comment || commentLength === 0) {
+            errors.push('❌ Review cannot be empty');
+        } else if (commentLength < 10) {
+            errors.push(`❌ Review must be at least 10 characters (currently ${commentLength})`);
+        } else if (commentLength > 500) {
+            errors.push('❌ Review too long (max 500 characters)');
         }
         
-        if (!data.captchaAnswer) {
-            errors.push('Please answer the verification question');
+        // Enhanced: More specific CAPTCHA message
+        if (!data.captchaAnswer || data.captchaAnswer.toString().trim() === '') {
+            errors.push('❌ Please answer the verification question');
+        } else if (isNaN(data.captchaAnswer)) {
+            errors.push('❌ Verification answer must be a number');
         }
         
         return {valid: errors.length === 0, errors};
@@ -125,17 +131,44 @@ const Validator = {
     },
     
     showErrors: function(errors, containerId) {
+        // Remove old alert if exists
+        const oldAlert = document.getElementById('validation-bottom-alert');
+        if (oldAlert) oldAlert.remove();
+        
+        // Also clear inline container if provided
         const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        container.innerHTML = errors.map(e => 
-            `<div class="error-message" role="alert">⚠️ ${e}</div>`
-        ).join('');
-        
-        // Auto-clear after 5 seconds
-        setTimeout(() => {
+        if (container) {
             container.innerHTML = '';
-        }, 5000);
+            container.style.display = 'none';
+        }
+        
+        // Create bottom alert container
+        const alertContainer = document.createElement('div');
+        alertContainer.id = 'validation-bottom-alert';
+        alertContainer.className = 'validation-alert-container';
+        
+        // Build error HTML
+        const errorsList = errors
+            .map(e => `<li>${e.replace(/❌\s*/, '')}</li>`)
+            .join('');
+        
+        alertContainer.innerHTML = `
+            <div class="validation-alert" role="alert" aria-live="assertive">
+                <button class="validation-alert-close" onclick="document.getElementById('validation-bottom-alert')?.remove()" aria-label="Close alert">&times;</button>
+                <div class="alert-title">⚠️ Review Validation Failed</div>
+                <ul class="alert-errors">
+                    ${errorsList}
+                </ul>
+            </div>
+        `;
+        
+        document.body.appendChild(alertContainer);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            const alert = document.getElementById('validation-bottom-alert');
+            if (alert) alert.remove();
+        }, 10000);
     }
 };
 
@@ -206,22 +239,53 @@ const Reviews = {
     
     loadCaptcha: async function() {
         try {
+            console.log('📋 Loading CAPTCHA question...');
             const response = await fetch('/get-captcha', {
                 credentials: 'include'
             });
             const data = await response.json();
             const questionEl = document.getElementById('captcha-question');
-            if (questionEl) {
+            const answerInput = document.getElementById('captcha-answer');
+            
+            if (!response.ok) {
+                console.error('❌ CAPTCHA load failed:', response.status);
+                if (questionEl) {
+                    questionEl.textContent = '⚠️ Error loading verification question. Please refresh the page.';
+                    questionEl.style.color = '#dc3545';
+                }
+                return;
+            }
+            
+            if (data.question && questionEl) {
+                console.log('✅ CAPTCHA loaded:', data.question.substring(0, 30) + '...');
                 questionEl.textContent = data.question;
+                questionEl.style.color = '#333';
+                if (answerInput) {
+                    answerInput.value = '';
+                    answerInput.focus();
+                }
+            } else {
+                console.error('❌ No question in CAPTCHA response:', data);
+                if (questionEl) {
+                    questionEl.textContent = '⚠️ Failed to load verification question';
+                    questionEl.style.color = '#dc3545';
+                }
             }
         } catch (error) {
-            console.error('Failed to load captcha:', error);
+            console.error('❌ Failed to load CAPTCHA:', error);
+            const questionEl = document.getElementById('captcha-question');
+            if (questionEl) {
+                questionEl.textContent = '⚠️ Error loading verification question';
+                questionEl.style.color = '#dc3545';
+            }
             Notifications.show('Failed to load verification question', 'error');
         }
     },
     
     submit: async function(event) {
         if (event) event.preventDefault();
+        
+        console.log('📤 Submitting review...');
         
         const data = {
             userName: document.getElementById('reviewer-name').value,
@@ -230,12 +294,20 @@ const Reviews = {
             captchaAnswer: document.getElementById('captcha-answer').value
         };
         
+        console.log('   Name:', data.userName?.substring(0, 20));
+        console.log('   Rating:', data.rating);
+        console.log('   Comment length:', data.comment?.length);
+        console.log('   CAPTCHA answer provided:', !!data.captchaAnswer);
+        
         const validation = Validator.review(data);
         if (!validation.valid) {
+            console.error('❌ Validation failed:', validation.errors);
             Validator.showErrors(validation.errors, 'review-errors');
             return;
         }
         
+        console.log('✅ Local validation passed');
+
         try {
             const response = await fetch('/submit-review', {
                 method: 'POST',
@@ -252,17 +324,22 @@ const Reviews = {
             
             const result = await response.json();
             
+            console.log('📨 Server response:', result);
+            
             if (result.success) {
+                console.log('✅ Review submitted successfully!');
                 Notifications.show('Review submitted successfully! ✅', 'success');
                 this.closeModal();
                 // Reload reviews after delay
                 setTimeout(() => this.loadReviews(this.currentBusinessId), 500);
             } else {
-                const errorMsg = result.errors ? result.errors.join(', ') : (result.error || 'Failed to submit review');
-                Validator.showErrors([errorMsg], 'review-errors');
+                const errorList = result.errors || [result.error || 'Failed to submit review'];
+                console.error('❌ Server rejected:', errorList);
+                Validator.showErrors(errorList, 'review-errors');
             }
         } catch (error) {
-            console.error('Submission error:', error);
+            console.error('❌ Submission error:', error);
+            Validator.showErrors(['An error occurred while submitting your review. Please try again.'], 'review-errors');
             Notifications.show('Failed to submit review. Please try again.', 'error');
         }
     },
