@@ -252,7 +252,8 @@ def verify():
             flash("No verification code found. Please register again.", "error")
             return redirect(url_for("register"))
         
-        if entered_code == saved_code:
+        # Strip both codes to handle whitespace correctly
+        if entered_code.strip() == str(saved_code).strip():
             # Mark email as verified
             queries.set_email_verified(pending_id, 1)
             

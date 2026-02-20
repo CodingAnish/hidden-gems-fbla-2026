@@ -284,19 +284,21 @@ def get_user_stats(user_id):
 
 
 def create_email_verification_code(user_id, code):
-    """Store a verification code for the user."""
+    """Store a verification code for the user (whitespace trimmed for consistency)."""
     conn = get_connection()
     cur = conn.cursor()
+    # Strip code to handle any whitespace issues
+    clean_code = str(code).strip()
     cur.execute(
         "INSERT INTO email_verification_codes (user_id, code) VALUES (?, ?)",
-        (user_id, code)
+        (user_id, clean_code)
     )
     conn.commit()
     conn.close()
 
 
 def get_latest_verification_code(user_id):
-    """Get the most recent verification code for user, or None."""
+    """Get the most recent verification code for user (trimmed), or None."""
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
@@ -305,7 +307,7 @@ def get_latest_verification_code(user_id):
     )
     verification_row = cur.fetchone()
     conn.close()
-    return verification_row[0] if verification_row else None
+    return str(verification_row[0]).strip() if verification_row else None
 
 
 def validate_email_code(user_id, code):
