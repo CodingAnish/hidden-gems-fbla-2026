@@ -100,12 +100,14 @@ def _send_email_async(to_email, subject, body, email_config):
         response = sg.send(message)
         
         if response.status_code in [200, 201, 202]:
-            print(f"✓ Email sent to {to_email}")
+            print(f"✓ Email sent successfully to {to_email}")
         else:
-            print(f"✗ Email failed to {to_email} (status {response.status_code})")
+            print(f"✗ Email failed to {to_email} - SendGrid status {response.status_code}")
             
     except Exception as e:
-        print(f"✗ Email error for {to_email}: {str(e)}")
+        print(f"✗ Email error sending to {to_email}: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 def send_verification_email(recipient_email, verification_code):
@@ -147,10 +149,11 @@ Richmond, Virginia
 """
     
     # Send email in background thread (non-blocking)
+    # daemon=False ensures thread completes even if main process exits
     thread = threading.Thread(
         target=_send_email_async,
         args=(recipient_email, email_subject, email_body, email_config),
-        daemon=True
+        daemon=False
     )
     thread.start()
     
@@ -195,10 +198,11 @@ Richmond, Virginia
 """
     
     # Send email in background thread (non-blocking)
+    # daemon=False ensures thread completes even if main process exits
     thread = threading.Thread(
         target=_send_email_async,
         args=(recipient_email, email_subject, email_body, email_config),
-        daemon=True
+        daemon=False
     )
     thread.start()
     
