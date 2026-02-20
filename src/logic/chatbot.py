@@ -63,21 +63,17 @@ def get_business_context():
     all_businesses = queries.get_all_businesses()
     available_categories = queries.get_categories()
     
-    # Format business data concisely (limit to 10 for speed)
+    # Format business data concisely (limit to 5 for maximum speed)
     formatted_businesses = []
-    for business in all_businesses[:10]:
+    for business in all_businesses[:5]:
         formatted_businesses.append({
             "name": business.get("name"),
             "category": business.get("category"),
-            "rating": business.get("average_rating"),
-            "review_count": business.get("total_reviews")
+            "rating": business.get("average_rating")
         })
     
-    # Build MINIMAL system prompt for speed
-    system_context = f"""You are Hidden Gems AI for Richmond, VA businesses.
-Categories: {', '.join(available_categories)}
-Businesses: {formatted_businesses}
-Be brief, friendly, and suggest 2-3 businesses per response. Keep it under 100 words."""
+    # Ultra-minimal system prompt for maximum speed
+    system_context = f"""Hidden Gems AI: Richmond businesses. Categories: {', '.join(available_categories)}. Businesses: {formatted_businesses}. Be brief."""
     
     return system_context
 
@@ -177,7 +173,7 @@ def call_cohere_api(messages, user_message, system_prompt, api_key):
         # Build message history for context
         # Cohere expects roles: "User", "Chatbot", "System", "Tool"
         conversation_history = []
-        for msg in messages[-3:]:  # Last 3 messages only for speed
+        for msg in messages[-2:]:  # Only last 2 messages for maximum speed
             # Map common role names to Cohere format
             role = msg["role"]
             if role == "user":
@@ -198,8 +194,8 @@ def call_cohere_api(messages, user_message, system_prompt, api_key):
             model="command-r-08-2024",
             preamble=system_prompt,
             chat_history=conversation_history,
-            temperature=0.5,  # Lower for speed
-            max_tokens=300  # Reduced
+            temperature=0.3,  # Very low for speed
+            max_tokens=250  # Reduced for max speed
         )
         
         return response.text
@@ -219,15 +215,15 @@ def call_groq_api(messages, user_message, system_prompt, api_key):
         
         # Build conversation
         conversation = [{"role": "system", "content": system_prompt}]
-        conversation.extend(messages[-3:])  # Only last 3 messages for speed
+        conversation.extend(messages[-2:])  # Only last 2 messages for max speed
         conversation.append({"role": "user", "content": user_message})
         
-        # Call Groq API with fastest model
+        # Call Groq API with fastest llama3 model
         response = client.chat.completions.create(
-            model="llama2-70b-4096",  # Faster than mixtral
+            model="llama-3.1-8b-instant",  # Ultra-fast llama3
             messages=conversation,
-            temperature=0.5,  # Lower for faster inference
-            max_tokens=300  # Further reduced
+            temperature=0.3,  # Very low for speed
+            max_tokens=250  # Further reduced
         )
         
         return response.choices[0].message.content
@@ -251,8 +247,8 @@ def call_huggingface_api(messages, user_message, system_prompt, api_key):
             {"role": "system", "content": system_prompt}
         ]
         
-        # Add conversation history (last 3 messages for speed)
-        for msg in messages[-3:]:
+        # Add conversation history (last 2 messages for maximum speed)
+        for msg in messages[-2:]:
             formatted_messages.append({
                 "role": msg["role"],
                 "content": msg["content"]
@@ -276,8 +272,8 @@ def call_huggingface_api(messages, user_message, system_prompt, api_key):
                 response = client.chat_completion(
                     model=model,
                     messages=formatted_messages,
-                    max_tokens=300,  # Reduced for speed
-                    temperature=0.5,  # Lower temp for faster inference
+                    max_tokens=250,  # Reduced for max speed
+                    temperature=0.3,  # Very low for fast inference
                     top_p=0.9
                 )
                 
