@@ -1,78 +1,71 @@
 """
-Email Sending Module - SMTP Configuration and Email Delivery
+Email Sending Module - SendGrid Email Delivery
 
-Handles sending transactional emails (verification, password reset) via SMTP.
+Handles sending transactional emails (verification, password reset) via SendGrid API.
 Configuration can come from environment variables or config.py file.
-Falls back gracefully if SMTP is not configured (for development).
+Falls back gracefully if SendGrid is not configured (for development).
 
 Hidden Gems | FBLA 2026
 """
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import os
 
+try:
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail
+    SENDGRID_AVAILABLE = True
+except ImportError:
+    SENDGRID_AVAILABLE = False
+
 # ============================================
-# SMTP CONFIGURATION
+# EMAIL CONFIGURATION
 # ============================================
 
 def _load_email_configuration():
     """
-    Load SMTP configuration from config module or environment variables.
+    Load email configuration from config module or environment variables.
     
     Tries to import config.py first for development, falls back to environment.
     This allows flexible configuration management.
     
     Returns:
         dict: Configuration dictionary with keys:
-            - host: SMTP server hostname
-            - port: SMTP port (default: 587)
-            - user: SMTP authentication username
-            - password: SMTP authentication password
+            - api_key: SendGrid API key
             - from_email: Email address to send from
             - from_name: Display name for sender (default: "Hidden Gems")
     """
     try:
         # Try to import config module from project root
         import config
-        smtp_config = {
-            "host": getattr(config, "SMTP_HOST", None) or os.environ.get("SMTP_HOST", "").strip(),
-            "port": getattr(config, "SMTP_PORT", None) or os.environ.get("SMTP_PORT", "587"),
-            "user": getattr(config, "SMTP_USER", None) or os.environ.get("SMTP_USER", "").strip(),
-            "password": getattr(config, "SMTP_PASSWORD", None) or os.environ.get("SMTP_PASSWORD", "").strip(),
-            "from_email": getattr(config, "FROM_EMAIL", None) or os.environ.get("FROM_EMAIL", "").strip(),
+        email_config = {
+            "api_key": getattr(config, "SENDGRID_API_KEY", None) or os.environ.get("SENDGRID_API_KEY", "").strip(),
+            "from_email": getattr(config, "FROM_EMAIL", None) or os.environ.get("FROM_EMAIL", "hiddengems.official26@gmail.com").strip(),
             "from_name": getattr(config, "FROM_NAME", None) or os.environ.get("FROM_NAME", "Hidden Gems"),
         }
     except ImportError:
         # Fallback to environment variables only
-        smtp_config = {
-            "host": os.environ.get("SMTP_HOST", "").strip(),
-            "port": os.environ.get("SMTP_PORT", "587"),
-            "user": os.environ.get("SMTP_USER", "").strip(),
-            "password": os.environ.get("SMTP_PASSWORD", "").strip(),
-            "from_email": os.environ.get("FROM_EMAIL", "").strip(),
+        email_config = {
+            "api_key": os.environ.get("SENDGRID_API_KEY", "").strip(),
+            "from_email": os.environ.get("FROM_EMAIL", "hiddengems.official26@gmail.com").strip(),
             "from_name": os.environ.get("FROM_NAME", "Hidden Gems"),
         }
     
-    return smtp_config
+    return email_config
 
 
 def is_email_configured():
     """
-    Check if SMTP is properly configured and ready to send emails.
+    Check if SendGrid is properly configured and ready to send emails.
     
-    Requires all of: host, user, password, from_email to be present.
+    Requires SendGrid library and API key to be present.
     
     Returns:
-        bool: True if SMTP can be used, False if not configured
+        bool: True if SendGrid can be used, False if not configured
     """
+    if not SENDGRID_AVAILABLE:
+        return False
+    
     email_config = _load_email_configuration()
-    return bool(
-        email_config["host"] and 
-        email_config["user"] and 
-        email_config["password"] and 
-        email_config["from_email"]
-    )
+    return bool(email_config["api_key"] and email_config["from_email"])
 
 
 # ============================================
@@ -96,20 +89,8 @@ def send_verification_email(recipient_email, verification_code):
     if not is_email_configured():
         return False, "Email service not configured"
     
-    # Load SMTP configuration
+    # Load email configuration
     email_config = _load_email_configuration()
-    
-    # Parse SMTP port (convert string to int)
-    try:
-        smtp_port = int(email_config["port"])
-    except (TypeError, ValueError):
-        smtp_port = 587  # Default TLS port if parsing fails
-    
-    # Format sender address with optional display name
-    if email_config["from_name"]:
-        sender_address = f"{email_config['from_name']} <{email_config['from_email']}>"
-    else:
-        sender_address = email_config["from_email"]
     
     # Build email subject and body
     email_subject = "Your Hidden Gems Verification Code"
@@ -127,30 +108,28 @@ If you didn't create a Hidden Gems account, you can ignore this email.
 Richmond, Virginia
 """
     
-    # Construct MIME email message
-    email_message = MIMEMultipart()
-    email_message["From"] = sender_address
-    email_message["To"] = recipient_email
-    email_message["Subject"] = email_subject
-    email_message.attach(MIMEText(email_body, "plain"))
-    
-    # Attempt to send email via SMTP
+    # Create SendGrid email message
     try:
-        with smtplib.SMTP(email_config["host"], smtp_port, timeout=10) as smtp_server:
-            # Upgrade connection to TLS encryption
-            smtp_server.starttls()
-            # Authenticate with SMTP server
-            smtp_server.login(email_config["user"], email_config["password"])
-            # Send email
-            smtp_server.sendmail(
-                email_config["from_email"], 
-                recipient_email, 
-                email_message.as_string()
-            )
-        return True, None
-    except Exception as smtp_error:
+        message = Mail(
+            from_email=(email_config["from_email"], email_config["from_name"]),
+            to_emails=recipient_email,
+            subject=email_subject,
+            plain_text_content=email_body
+        )
+        
+        # Send email via SendGrid API
+        sg = SendGridAPIClient(email_config["api_key"])
+        response = sg.send(message)
+        
+        # Check response status
+        if response.status_code in [200, 201, 202]:
+            return True, None
+        else:
+            return False, f"SendGrid returned status {response.status_code}"
+            
+    except Exception as e:
         # Return error details for logging/debugging
-        return False, str(smtp_error)
+        return False, str(e)
 
 
 def send_password_reset_email(recipient_email, password_reset_link):
@@ -170,20 +149,8 @@ def send_password_reset_email(recipient_email, password_reset_link):
     if not is_email_configured():
         return False, "Email service not configured"
     
-    # Load SMTP configuration
+    # Load email configuration
     email_config = _load_email_configuration()
-    
-    # Parse SMTP port (convert string to int)
-    try:
-        smtp_port = int(email_config["port"])
-    except (TypeError, ValueError):
-        smtp_port = 587  # Default TLS port if parsing fails
-    
-    # Format sender address with optional display name
-    if email_config["from_name"]:
-        sender_address = f"{email_config['from_name']} <{email_config['from_email']}>"
-    else:
-        sender_address = email_config["from_email"]
     
     # Build email subject and body with reset link
     email_subject = "Reset Your Hidden Gems Password"
@@ -199,27 +166,25 @@ This link is valid for 1 hour. If you didn't request this, you can ignore this e
 Richmond, Virginia
 """
     
-    # Construct MIME email message
-    email_message = MIMEMultipart()
-    email_message["From"] = sender_address
-    email_message["To"] = recipient_email
-    email_message["Subject"] = email_subject
-    email_message.attach(MIMEText(email_body, "plain"))
-    
-    # Attempt to send email via SMTP
+    # Create SendGrid email message
     try:
-        with smtplib.SMTP(email_config["host"], smtp_port, timeout=10) as smtp_server:
-            # Upgrade connection to TLS encryption
-            smtp_server.starttls()
-            # Authenticate with SMTP server
-            smtp_server.login(email_config["user"], email_config["password"])
-            # Send email
-            smtp_server.sendmail(
-                email_config["from_email"], 
-                recipient_email, 
-                email_message.as_string()
-            )
-        return True, None
-    except Exception as smtp_error:
+        message = Mail(
+            from_email=(email_config["from_email"], email_config["from_name"]),
+            to_emails=recipient_email,
+            subject=email_subject,
+            plain_text_content=email_body
+        )
+        
+        # Send email via SendGrid API
+        sg = SendGridAPIClient(email_config["api_key"])
+        response = sg.send(message)
+        
+        # Check response status
+        if response.status_code in [200, 201, 202]:
+            return True, None
+        else:
+            return False, f"SendGrid returned status {response.status_code}"
+            
+    except Exception as e:
         # Return error details for logging/debugging
-        return False, str(smtp_error)
+        return False, str(e)
