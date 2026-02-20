@@ -70,9 +70,9 @@ USED BY: All content pages (home, login, register, business detail, etc.)
         <a href="{{ url_for('recommendations') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'recommendations' %}border-bottom: 3px solid #9b59b6; background: rgba(155, 89, 182, 0.1);{% endif %} transition: all 0.3s;">For You</a>
         <!-- Deals Link - View special offers and promotions -->
         <a href="{{ url_for('deals') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'deals' %}border-bottom: 3px solid #f39c12; background: rgba(243, 156, 18, 0.1);{% endif %} transition: all 0.3s;">Deals</a>
-        <!-- Favorites Link - View saved businesses with real-time counter badge -->
-        <a href="{{ url_for('favorites') }}" id="favs-link" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'favorites' %}border-bottom: 3px solid #2563EB; background: rgba(37, 99, 235, 0.1);{% endif %} transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;">
-          Favorites <span id="fav-count-badge" style="background: #2563EB; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; display: none;">0</span>
+        <!-- Favorites Link - View saved businesses -->
+        <a href="{{ url_for('favorites') }}" id="favs-link" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'favorites' %}border-bottom: 3px solid #2563EB; background: rgba(37, 99, 235, 0.1);{% endif %} transition: all 0.3s;">
+          Favorites
         </a>
         <!-- Help Link - Access FAQ and documentation -->
         <a href="{{ url_for('help_page') }}" style="padding: 1rem 1.5rem; font-weight: bold; font-size: 1.05rem; border-bottom: 3px solid transparent; {% if request.endpoint == 'help_page' %}border-bottom: 3px solid #27ae60; background: rgba(39, 174, 96, 0.1);{% endif %} transition: all 0.3s;">Help</a>
@@ -161,35 +161,7 @@ USED BY: All content pages (home, login, register, business detail, etc.)
     </div>
   </header>
 
-  <!-- HEADER SCRIPT: Favorites Counter Badge Management -->
-  <script>
-    /**
-     * FUNCTION: updateFavsBadge
-     * PURPOSE: Update the favorites counter badge in the navigation menu
-     * BEHAVIOR: Reads from localStorage Favorites object and displays count badge
-     *          Hides badge if no favorites exist, shows count if favorites present
-     * TRIGGERS: On page load and when localStorage changes (sync across tabs)
-     */
-    function updateFavsBadge() {
-      // Get favorites array from localStorage (managed by Favorites class)
-      const favs = Favorites?.all || [];
-      // Get reference to badge element in the DOM
-      const badge = document.getElementById('fav-count-badge');
-      
-      // Update badge visibility based on favorites count
-      if (badge && favs.length > 0) {
-        badge.textContent = favs.length;        // Display count of favorites
-        badge.style.display = 'flex';           // Show badge
-      } else if (badge) {
-        badge.style.display = 'none';           // Hide badge if no favorites
-      }
-    }
-    
-    // INITIALIZE: Run updateFavsBadge when page load is complete
-    document.addEventListener('DOMContentLoaded', updateFavsBadge);
-    // SYNC: Listen for storage changes (favorites updated in another browser tab)
-    window.addEventListener('storage', updateFavsBadge);
-  </script>
+  <!-- Favorites Counter Badge - REMOVED -->
   
   <!-- MAIN CONTENT AREA - Where child page templates render their content -->
   <main class="main" role="main">

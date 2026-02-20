@@ -509,9 +509,6 @@ const Help = {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Update favorite count
-    updateFavoriteCount();
-    
     // Update favorite buttons based on saved state
     document.querySelectorAll('[data-business-card]').forEach(card => {
         const businessId = card.dataset.businessId;
@@ -555,13 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function updateFavoriteCount() {
-    const count = Favorites.all.length;
-    const badge = document.getElementById('favorites-count');
-    if (badge) {
-        badge.textContent = count;
-    }
-}
+// Badge update function - REMOVED
 
 function toggleFavorite(businessId, businessName, button) {
     const isFav = Favorites.toggle(businessId, businessName);
@@ -570,8 +561,6 @@ function toggleFavorite(businessId, businessName, button) {
         button.innerHTML = isFav ? '❤️ Saved' : '🤍 Save';
         button.classList.toggle('active', isFav);
     }
-    
-    updateFavoriteCount();
     
     // Update card data attribute
     const card = document.querySelector(`[data-business-id="${businessId}"]`);
