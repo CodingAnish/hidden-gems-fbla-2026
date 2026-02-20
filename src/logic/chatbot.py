@@ -63,9 +63,9 @@ def get_business_context():
     all_businesses = queries.get_all_businesses()
     available_categories = queries.get_categories()
     
-    # Format business data concisely (limit to 50 to avoid token overflow)
+    # Format business data concisely (limit to 20 for faster responses)
     formatted_businesses = []
-    for business in all_businesses[:50]:
+    for business in all_businesses[:20]:
         formatted_businesses.append({
             "name": business.get("name"),
             "category": business.get("category"),
@@ -206,7 +206,7 @@ def call_cohere_api(messages, user_message, system_prompt, api_key):
         # Build message history for context
         # Cohere expects roles: "User", "Chatbot", "System", "Tool"
         conversation_history = []
-        for msg in messages[-10:]:  # Last 10 messages for context
+        for msg in messages[-5:]:  # Last 5 messages for faster responses
             # Map common role names to Cohere format
             role = msg["role"]
             if role == "user":
@@ -228,7 +228,7 @@ def call_cohere_api(messages, user_message, system_prompt, api_key):
             preamble=system_prompt,
             chat_history=conversation_history,
             temperature=0.7,
-            max_tokens=400
+            max_tokens=350  # Reduced for faster responses
         )
         
         return response.text
@@ -248,7 +248,7 @@ def call_groq_api(messages, user_message, system_prompt, api_key):
         
         # Build conversation
         conversation = [{"role": "system", "content": system_prompt}]
-        conversation.extend(messages[-10:])  # Last 10 messages
+        conversation.extend(messages[-5:])  # Last 5 messages (faster)
         conversation.append({"role": "user", "content": user_message})
         
         # Call Groq API
@@ -256,7 +256,7 @@ def call_groq_api(messages, user_message, system_prompt, api_key):
             model="mixtral-8x7b-32768",  # or "llama2-70b-4096"
             messages=conversation,
             temperature=0.7,
-            max_tokens=400
+            max_tokens=350  # Reduced for faster responses
         )
         
         return response.choices[0].message.content
@@ -280,8 +280,8 @@ def call_huggingface_api(messages, user_message, system_prompt, api_key):
             {"role": "system", "content": system_prompt}
         ]
         
-        # Add conversation history (last 10 messages)
-        for msg in messages[-10:]:
+        # Add conversation history (last 5 messages for faster responses)
+        for msg in messages[-5:]:
             formatted_messages.append({
                 "role": msg["role"],
                 "content": msg["content"]
@@ -305,7 +305,7 @@ def call_huggingface_api(messages, user_message, system_prompt, api_key):
                 response = client.chat_completion(
                     model=model,
                     messages=formatted_messages,
-                    max_tokens=400,
+                    max_tokens=350,  # Reduced for faster responses
                     temperature=0.7,
                     top_p=0.9
                 )
