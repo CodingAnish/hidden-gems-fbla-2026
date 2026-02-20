@@ -47,23 +47,6 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent JavaScript access to ses
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24-hour session timeout
 
-# Global error handler for 500 errors
-@app.errorhandler(500)
-def handle_500(e):
-    """Handle internal server errors gracefully."""
-    import traceback
-    print(f"Internal Server Error: {str(e)}")
-    print(traceback.format_exc())
-    return render_template("error.html", error="An unexpected error occurred. Please try again."), 500
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    """Handle all unhandled exceptions."""
-    import traceback
-    print(f"Unhandled Exception: {str(e)}")
-    print(traceback.format_exc())
-    return render_template("error.html", error="An error occurred. Please try again."), 500
-
 
 # Register custom Jinja2 filters
 @app.template_filter('from_json')
@@ -415,70 +398,65 @@ def favorites():
     try:
         # Get favorite businesses
         fav_result = queries.get_favorite_businesses(user["id"])
-        favorite_businesses = fav_result if fav_result else []
-        
-        # Process businesses and add deals
-        processed_businesses = []
-        for business in favorite_businesses:
-            try:
-                # Ensure business is a dict
-                if not isinstance(business, dict):
-                    try:
-                        business = dict(business)
-                    except Exception:
-                        continue  # Skip problematic businesses
-                
-                # Safely get business ID
-                biz_id = business.get("id")
-                if not biz_id:
-                    continue
-                
-                # Add deals safely
+        if not fav_result:
+            favorite_businesses = []
+        else:
+            # Convert each business row to dict
+            favorite_businesses = []
+            for business in fav_result:
                 try:
-                    deals = queries.get_deals_by_business(biz_id)
-                    business["deals"] = deals if deals else []
-                except Exception:
-                    business["deals"] = []  # Default to empty if deals fail
-                
-                processed_businesses.append(business)
-            except Exception as item_error:
-                # Skip individual items that cause errors
-                continue
-        
-        favorite_businesses = processed_businesses
-    
+                    # Handle both dict and sqlite3.Row objects
+                    if isinstance(business, dict):
+                        biz_dict = business
+                    else:
+                        # Try to convert Row to dict
+                        biz_dict = {key: business[key] for key in business.keys()} if hasattr(business, 'keys') else dict(business)
+                    
+                    # Get business ID
+                    biz_id = biz_dict.get("id")
+                    if not biz_id:
+                        continue
+                    
+                    # Get deals for this business
+                    try:
+                        deals = queries.get_deals_by_business(biz_id) or []
+                        biz_dict["deals"] = deals
+                    except Exception:
+                        biz_dict["deals"] = []
+                    
+                    favorite_businesses.append(biz_dict)
+                except Exception as item_err:
+                    print(f"Error processing favorite item: {item_err}")
+                    continue
     except Exception as e:
-        # Log error but continue with empty list
+        print(f"Error loading favorites: {e}")
         import traceback
-        print(f"Error loading favorites: {str(e)}")
-        print(traceback.format_exc())
+        traceback.print_exc()
         favorite_businesses = []
     
-    # Pagination: 12 items per page
+    # Pagination
     items_per_page = 12
     try:
-        page = int(request.args.get("page", 1))
-        if page < 1:
-            page = 1
+        page = max(1, int(request.args.get("page", 1)))
     except (ValueError, TypeError):
         page = 1
     
-    total_businesses = len(favorite_businesses) if favorite_businesses else 0
-    total_pages = (total_businesses + items_per_page - 1) // items_per_page if total_businesses > 0 else 1
-    
-    if page > total_pages and total_pages > 0:
-        page = total_pages
+    total_businesses = len(favorite_businesses)
+    total_pages = max(1, (total_businesses + items_per_page - 1) // items_per_page)
+    page = min(page, total_pages)
     
     start_idx = (page - 1) * items_per_page
     end_idx = start_idx + items_per_page
-    businesses = favorite_businesses[start_idx:end_idx] if favorite_businesses else []
+    businesses = favorite_businesses[start_idx:end_idx]
     
-    try:
-        return render_template("favorites.html", user=user, businesses=businesses, page=page, total_pages=total_pages, total_businesses=total_businesses)
-    except Exception as template_error:
-        # If template rendering fails, return safe response
-        print(f"Template error: {str(template_error)}")
-        return f"<html><head><title>Favorites</title></head><body><h1>Favorites</h1><p>You have {total_businesses} favorite businesses.</p></body></html>"
+    return render_template(
+        "favorites.html",
+        user=user,
+        businesses=businesses,
+        page=page,
+        total_pages=total_pages,
+        total_businesses=total_businesses
+    )
 
 
 @app.route("/deals")
@@ -588,25 +566,53 @@ def profile():
         return redirect(url_for("login"))
     
     # Get user stats
-    fav_count = len(queries.get_favorite_business_ids(user["id"]) or [])
-    reviews = queries.get_reviews_by_user(user["id"])
-    review_count = len(reviews) if reviews else 0
+    try:
+        fav_ids = queries.get_favorite_business_ids(user["id"]) or []
+        fav_count = len(fav_ids)
+    except Exception:
+        fav_count = 0
     
-    # Calculate average rating given
-    avg_rating = 4.8  # Default
-    if reviews:
-        total_rating = sum(r.get("rating", 0) for r in reviews)
-        avg_rating = round(total_rating / len(reviews), 1)
+    try:
+        reviews = queries.get_reviews_by_user(user["id"]) or []
+        review_count = len(reviews)
+    except Exception:
+        reviews = []
+        review_count = 0
     
-    # Get recent reviews (max 5)
+    # Calculate average rating
+    avg_rating = 4.8
+    if reviews and len(reviews) > 0:
+        try:
+            total_rating = sum(r.get("rating", 0) for r in reviews)
+            avg_rating = round(total_rating / len(reviews), 1)
+        except Exception:
+            avg_rating = 4.8
+    
+    # Get recent reviews
     recent_reviews = reviews[:5] if reviews else []
     
-    # Get recent favorites (max 4)
-    favorites = queries.get_favorite_businesses(user["id"]) or []
+    # Get recent favorites
+    try:
+        fav_businesses = queries.get_favorite_businesses(user["id"]) or []
+        # Convert to list of dicts
+        favorites = []
+        for fav in fav_businesses:
+            try:
+                if isinstance(fav, dict):
+                    favorites.append(fav)
+                else:
+                    favorites.append({key: fav[key] for key in fav.keys()} if hasattr(fav, 'keys') else dict(fav))
+            except Exception:
+                continue
+    except Exception:
+        favorites = []
     
-    # Member since (from user created_at)
-    user_data = queries.user_by_email(user["email"])
-    member_since = user_data.get("created_at", "Recently") if user_data else "Recently"
+    # Get user data for member since
+    try:
+        user_data = queries.user_by_email(user["email"]) or {}
+        member_since = user_data.get("created_at", "Recently")
+    except Exception:
+        member_since = "Recently"
     
     return render_template(
         "profile.html",
